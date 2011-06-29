@@ -48,7 +48,7 @@ def get_oauth_request(request):
         auth_header = {'Authorization': request.META['HTTP_AUTHORIZATION']}
 
     parameters = dict((k, v.encode('utf-8'))
-                      for (k, v) in request.REQUEST.iteritems())
+                      for (k, v) in request.GET.iteritems())
     return oauth.Request.from_request(request.method,
         request.build_absolute_uri(),
         headers=auth_header,
