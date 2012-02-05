@@ -163,7 +163,8 @@ def access_token(request):
         
         # Handle Request Token
         try:
-            request_token = store.create_request_token(request, oauth_request, consumer, oauth_request.get('oauth_callback'))
+            #request_token = store.create_request_token(request, oauth_request, consumer, oauth_request.get('oauth_callback'))
+            request_token = store.create_request_token(request, oauth_request, consumer, OUT_OF_BAND)
             request_token = store.authorize_request_token(request, oauth_request, request_token)
         except oauth.Error, err:
             return send_oauth_error(err)
