@@ -81,12 +81,20 @@ def user_authorization(request, form_class=AuthorizeRequestTokenForm):
                 response = HttpResponseRedirect(request_token.get_callback_url(args))
             else:
                 # try to get custom callback view
-                callback_view_str = getattr(settings, OAUTH_CALLBACK_VIEW, 
+                callback_view_str = getattr(settings, OAUTH_CALLBACK_VIEW,
                                     'oauth_provider.views.fake_callback_view')
                 try:
-                    callback_view = get_callable(callback_view_str)
+                    view_callable = get_callable(callback_view_str)
                 except AttributeError:
                     raise Exception, "%s view doesn't exist." % callback_view_str
+
+                # try to treat it as Class Based View (CBV)
+                try:
+                    callback_view = view_callable.as_view()
+                except AttributeError:
+                    # if it appears not to be CBV treat it like FBV
+                    callback_view = view_callable
+                
                 response = callback_view(request, **args)
         else:
             response = send_oauth_error(oauth.Error(_('Action not allowed.')))
@@ -101,7 +109,7 @@ def user_authorization(request, form_class=AuthorizeRequestTokenForm):
 
         # try to treat it as Class Based View (CBV)
         try:
-            authorize_view = get_callable(authorize_view_str).as_view()
+            authorize_view = view_callable.as_view()
         except AttributeError:
             # if it appears not to be CBV treat it like FBV
             authorize_view = view_callable
