@@ -561,6 +561,8 @@ class BaseOAuthTestCase(TestCase):
         self.c = Client()
 
     def _request_token(self):
+        # The Consumer sends the following HTTP POST request to the
+        # Service Provider:
         response = self.c.get("/oauth/request_token/", self.request_token_parameters)
         self.assertEqual(
             response.status_code,
@@ -582,9 +584,6 @@ class OAuthTestsBug10(BaseOAuthTestCase):
     See https://code.welldev.org/django-oauth-plus/issue/10/malformed-callback-url-when-user-denies
     """
     def test_Request_token_request_succeeds_with_valid_request_token_parameters(self):
-        # The Consumer sends the following HTTP POST request to the
-        # Service Provider:
-
         response = self._request_token()
         token = self.request_token
 
@@ -603,10 +602,6 @@ class OAuthTestsBug10(BaseOAuthTestCase):
             response.status_code,
             200)
 
-        #self.assertEqual(
-        #    response.content,
-        #    'Fake authorize view for printer.example.com with params: oauth_token=...')
-
         # fake access not granted by the user (set session parameter again)
         self.authorization_parameters['authorize_access'] = 0
         response = self.c.post("/oauth/authorize/", self.authorization_parameters)
@@ -616,3 +611,15 @@ class OAuthTestsBug10(BaseOAuthTestCase):
         self.assertEqual('http://printer.example.com/request_token_ready?error=Access+not+granted+by+user.', response['Location'])
         self.c.logout()
 
+class OAuthOutOfBoundTests(BaseOAuthTestCase):
+    def test_Requesting_user_authorization_succeeds_when_oob(self):
+        self.request_token_parameters['oauth_callback'] = 'oob'
+        self._request_token()
+
+        self.c.login(username=self.username, password=self.password)
+        parameters = self.authorization_parameters = {'oauth_token': self.request_token.key}
+        response = self.c.get("/oauth/authorize/", parameters)
+        
+        self.assertEqual(
+            response.status_code,
+            200)
