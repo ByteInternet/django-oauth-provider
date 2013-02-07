@@ -619,7 +619,7 @@ class OAuthOutOfBoundTests(BaseOAuthTestCase):
         self.c.login(username=self.username, password=self.password)
         parameters = self.authorization_parameters = {'oauth_token': self.request_token.key}
         response = self.c.get("/oauth/authorize/", parameters)
-        
+
         self.assertEqual(
             response.status_code,
             200)

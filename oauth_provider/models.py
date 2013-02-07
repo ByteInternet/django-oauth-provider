@@ -121,7 +121,7 @@ class Token(models.Model):
             return urlparse.urlunparse((scheme, netloc, path, params,
                 query, fragment))
         args = args is not None and "?%s" % urllib.urlencode(args) or ""
-        return self.callback + args
+        return self.callback and self.callback + args
 
     def set_callback(self, callback):
         if callback != OUT_OF_BAND: # out of band, says "we can't do this!"
