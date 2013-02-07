@@ -29,8 +29,8 @@ MEDIA_URL = ''
 ADMIN_MEDIA_PREFIX = '/media/'
 SECRET_KEY = '2+@4vnr#v8e273^+a)g$8%dre^dwcn#d&n#8+l6jk7r#$p&3zk'
 TEMPLATE_LOADERS = (
-    'django.template.loaders.filesystem.load_template_source',
-    'django.template.loaders.app_directories.load_template_source',
+    'django.template.loaders.filesystem.Loader',
+    'django.template.loaders.app_directories.Loader',
 )
 MIDDLEWARE_CLASSES = (
     'django.middleware.common.CommonMiddleware',
