@@ -7,7 +7,7 @@ import oauth2 as oauth
 from django.db import models
 from django.contrib.auth.models import User
 
-from managers import TokenManager, ConsumerManager, ResourceManager
+from managers import TokenManager
 from consts import KEY_SIZE, SECRET_SIZE, CONSUMER_KEY_SIZE, CONSUMER_STATES,\
                    PENDING, VERIFIER_SIZE, MAX_URL_LENGTH, OUT_OF_BAND
 from utils import check_valid_callback
@@ -27,8 +27,6 @@ class Resource(models.Model):
     name = models.CharField(max_length=255)
     url = models.TextField(max_length=MAX_URL_LENGTH)
     is_readonly = models.BooleanField(default=True)
-    
-    objects = ResourceManager()
 
     def __unicode__(self):
         return u"Resource %s with url %s" % (self.name, self.url)
@@ -43,8 +41,6 @@ class Consumer(models.Model):
 
     status = models.SmallIntegerField(choices=CONSUMER_STATES, default=PENDING)
     user = models.ForeignKey(User, null=True, blank=True)
-
-    objects = ConsumerManager()
         
     def __unicode__(self):
         return u"Consumer %s with key %s" % (self.name, self.key)
@@ -108,7 +104,7 @@ class Token(models.Model):
         self.secret = generate_random(length=SECRET_SIZE)
         self.save()
 
-    def get_callback_url(self):
+    def get_callback_url(self, args=None):
         """
         OAuth 1.0a, append the oauth_verifier.
         """
@@ -119,9 +115,12 @@ class Token(models.Model):
                 query = '%s&oauth_verifier=%s' % (query, self.verifier)
             else:
                 query = 'oauth_verifier=%s' % self.verifier
+            if args is not None:
+                query += "&%s" % urllib.urlencode(args)
             return urlparse.urlunparse((scheme, netloc, path, params,
                 query, fragment))
-        return self.callback
+        args = args is not None and "?%s" % urllib.urlencode(args) or ""
+        return self.callback + args
 
     def set_callback(self, callback):
         if callback != OUT_OF_BAND: # out of band, says "we can't do this!"
