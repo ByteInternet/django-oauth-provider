@@ -40,10 +40,12 @@ MIDDLEWARE_CLASSES = (
 ROOT_URLCONF = 'urls'
 TEMPLATE_DIRS = (os.path.join(ROOT_PATH, 'templates'),)
 INSTALLED_APPS = (
-    'oauth_provider',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.sites',
     'django.contrib.admin',
+
+    'oauth_provider',
+    'oauth_provider.tests'
 )
