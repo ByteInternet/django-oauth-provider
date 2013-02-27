@@ -1,4 +1,4 @@
-from django.conf.urls.defaults import *
+from oauth_provider.compat import url, patterns, include
 
 from views import request_token, user_authorization, access_token
 

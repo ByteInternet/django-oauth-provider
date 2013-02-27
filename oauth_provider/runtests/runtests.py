@@ -26,7 +26,7 @@ def usage():
 def main():
     TestRunner = get_runner(settings)
 
-    test_runner = TestRunner()
+    test_runner = TestRunner(verbosity=2)
     if len(sys.argv) == 2:
         test_case = '.' + sys.argv[1]
     elif len(sys.argv) == 1:

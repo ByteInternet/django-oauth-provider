@@ -1,4 +1,5 @@
-from django.conf.urls.defaults import *
+from oauth_provider.compat import url, patterns, include
+
 from django.contrib import admin
 
 from oauth_provider.views import protected_resource_example
