@@ -73,15 +73,15 @@ class OAuthTestsBug10(BaseOAuthTestCase):
     def test_Requesting_user_authorization_fails_when_user_denies_authorization(self):
         self._request_token()
         self.c.login(username=self.username, password=self.password)
-        parameters = self.authorization_parameters = {'oauth_token': self.request_token.key}
+        parameters = authorization_parameters = {'oauth_token': self.request_token.key}
         response = self.c.get("/oauth/authorize/", parameters)
         self.assertEqual(
             response.status_code,
             200)
 
         # fake access not granted by the user (set session parameter again)
-        self.authorization_parameters['authorize_access'] = 0
-        response = self.c.post("/oauth/authorize/", self.authorization_parameters)
+        authorization_parameters['authorize_access'] = False
+        response = self.c.post("/oauth/authorize/", authorization_parameters)
         self.assertEqual(
             response.status_code,
             302)
