@@ -49,3 +49,9 @@ INSTALLED_APPS = (
     'oauth_provider',
     'oauth_provider.tests'
 )
+
+import django
+if django.VERSION >= (1, 5):
+    # custom user model for tests issue #22
+    INSTALLED_APPS += ('test_app',)
+    AUTH_USER_MODEL = 'test_app.TestUser'
