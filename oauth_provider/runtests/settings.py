@@ -44,7 +44,6 @@ INSTALLED_APPS = (
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.sites',
-    'django.contrib.admin',
 
     'oauth_provider',
     'oauth_provider.tests'

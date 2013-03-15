@@ -3,16 +3,14 @@ import urllib
 import urlparse
 from time import time
 import oauth2 as oauth
-
 from django.db import models
-from django.contrib.auth.models import User
 
-from managers import TokenManager
-from consts import KEY_SIZE, SECRET_SIZE, CONSUMER_KEY_SIZE, CONSUMER_STATES,\
-                   PENDING, VERIFIER_SIZE, MAX_URL_LENGTH, OUT_OF_BAND
-from utils import check_valid_callback
+from oauth_provider.compat import User, AUTH_USER_MODEL, get_random_string
+from oauth_provider.managers import TokenManager
+from oauth_provider.consts import KEY_SIZE, SECRET_SIZE, CONSUMER_KEY_SIZE, CONSUMER_STATES,\
+    PENDING, VERIFIER_SIZE, MAX_URL_LENGTH, OUT_OF_BAND
+from oauth_provider.utils import check_valid_callback
 
-generate_random = User.objects.make_random_password
 
 class Nonce(models.Model):
     token_key = models.CharField(max_length=KEY_SIZE)
@@ -40,7 +38,7 @@ class Consumer(models.Model):
     secret = models.CharField(max_length=SECRET_SIZE, blank=True)
 
     status = models.SmallIntegerField(choices=CONSUMER_STATES, default=PENDING)
-    user = models.ForeignKey(User, null=True, blank=True)
+    user = models.ForeignKey(AUTH_USER_MODEL, null=True, blank=True)
     xauth_allowed = models.BooleanField("Allow xAuth", default = False)
         
     def __unicode__(self):
@@ -52,7 +50,7 @@ class Consumer(models.Model):
         Use this after you've added the other data in place of save().
         """
         self.key = uuid.uuid4().hex
-        self.secret = generate_random(length=SECRET_SIZE)
+        self.secret = get_random_string(length=SECRET_SIZE)
         self.save()
 
 
@@ -67,7 +65,7 @@ class Token(models.Model):
     timestamp = models.IntegerField(default=long(time()))
     is_approved = models.BooleanField(default=False)
     
-    user = models.ForeignKey(User, null=True, blank=True, related_name='tokens')
+    user = models.ForeignKey(AUTH_USER_MODEL, null=True, blank=True, related_name='tokens')
     consumer = models.ForeignKey(Consumer)
     resource = models.ForeignKey(Resource)
     
@@ -102,7 +100,7 @@ class Token(models.Model):
         Use this after you've added the other data in place of save(). 
         """
         self.key = uuid.uuid4().hex
-        self.secret = generate_random(length=SECRET_SIZE)
+        self.secret = get_random_string(length=SECRET_SIZE)
         self.save()
 
     def get_callback_url(self, args=None):
