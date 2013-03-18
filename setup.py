@@ -1,8 +1,19 @@
 from setuptools import setup, find_packages
- 
+from oauth_provider import __version__ as version
+import os
+
+def strip_comments(l):
+    return l.split('#', 1)[0].strip()
+
+def reqs(*f):
+    return list(filter(None, [strip_comments(l) for l in open(
+        os.path.join(os.getcwd(), *f)).readlines()]))
+
+install_requires = reqs('requirements.txt')
+
 setup(
     name='django-oauth-plus',
-    version='2.0',
+    version=version,
     description='Support of OAuth 1.0a in Django using python-oauth2.',
     author='David Larlet',
     author_email='david@larlet.fr',
@@ -21,7 +32,8 @@ setup(
     # svn and CVS by default
     include_package_data=True,
     zip_safe=False,
-    # Tells setuptools to download setuptools_git before running setup.py so
+    # Tells setuptools to download setuptools_hg before running setup.py so
     # it can find the data files under Hg version control.
     setup_requires=['setuptools_hg'],
+    install_requires=install_requires,
 )
