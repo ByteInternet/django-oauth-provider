@@ -2,6 +2,7 @@
 import django
 
 # location of patterns, url, include changes in 1.4 onwards
+
 try:
     from django.conf.urls import patterns, url, include
 except ImportError:
@@ -25,3 +26,12 @@ except:
     # fallback for older versions of django (<=1.3). You shouldn't use them
     get_random_string = lambda length: ''.join([random.choice('abcdefghijklmnopqrstuvwxyz'
                                     'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789') for i in range(length)])
+
+if django.VERSION >= (1,4):
+    from django.http import HttpResponse
+    class UnsafeRedirect(HttpResponse):
+        def __init__(self, url, *args, **kwargs):
+            super(UnsafeRedirect, self).__init__(*args, status=302, **kwargs)
+            self["Location"] = url
+else:
+    from django.http import HttpResponse as UnsafeRedirect
