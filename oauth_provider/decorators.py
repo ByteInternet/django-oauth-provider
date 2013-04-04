@@ -44,7 +44,7 @@ class CheckOAuth(object):
             except InvalidTokenError:
                 return send_oauth_error(Error(_('Invalid access token: %s') % oauth_request.get_parameter('oauth_token')))
             try:
-                parameters = self.validate_token(request, consumer, token)
+                self.validate_token(request, consumer, token)
             except Error, e:
                 return send_oauth_error(e)
             
