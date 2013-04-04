@@ -34,4 +34,4 @@ if django.VERSION >= (1,4):
             super(UnsafeRedirect, self).__init__(*args, status=302, **kwargs)
             self["Location"] = url
 else:
-    from django.http import HttpResponse as UnsafeRedirect
+    from django.http import HttpResponseRedirect as UnsafeRedirect

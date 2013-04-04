@@ -88,7 +88,7 @@ class OAuthTestsBug2UrlParseNonHttpScheme(BaseOAuthTestCase):
     def test_non_http_url_callback_scheme(self):
 
         # @vmihailenco callback example
-        self.request_token_parameters['oauth_callback'] = 'chrome-extension://fnaffgdfmcfbjiifjkhbfbnjljaabiaj.com/chrome_ex_oauth.html?q=1'
+        self.request_token_parameters['oauth_callback'] = 'ftp://fnaffgdfmcfbjiifjkhbfbnjljaabiaj.com/chrome_ex_oauth.html?q=1'
         self._request_token()
 
         self.c.login(username=self.username, password=self.password)
@@ -102,4 +102,4 @@ class OAuthTestsBug2UrlParseNonHttpScheme(BaseOAuthTestCase):
         self.assertEqual(response.status_code, 302)
 
         # assert query part of url is not malformed
-        assert "?q=1&" in response["location"]
+        assert "?q=1&" in response["Location"]

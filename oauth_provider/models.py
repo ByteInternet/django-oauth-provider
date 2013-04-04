@@ -114,6 +114,12 @@ class Token(models.Model):
                 query = '%s&oauth_verifier=%s' % (query, self.verifier)
             else:
                 query = 'oauth_verifier=%s' % self.verifier
+
+            # workaround for non-http scheme urlparse problem in py2.6 (issue #2)
+            if "?" in path:
+                query = "%s&%s" % (path.split("?")[-1], query)
+                path = "?".join(path[:-1])
+
             if args is not None:
                 query += "&%s" % urllib.urlencode(args)
             return urlparse.urlunparse((scheme, netloc, path, params,

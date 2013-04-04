@@ -15,10 +15,6 @@ DATABASES = {
     }
 }
 
-#DATABASE_ENGINE = 'sqlite3'
-#DATABASE_NAME = os.path.join(ROOT_PATH, 'testdb.sqlite')
-DATABASE_ENGINE = 'postgresql_psycopg2'
-DATABASE_NAME = 'oauthprovider'
 
 TIME_ZONE = 'America/Chicago'
 LANGUAGE_CODE = 'en-us'
@@ -48,6 +44,8 @@ INSTALLED_APPS = (
     'oauth_provider',
     'oauth_provider.tests'
 )
+
+OAUTH_UNSAFE_REDIRECTS = True
 
 import django
 if django.VERSION >= (1, 5):

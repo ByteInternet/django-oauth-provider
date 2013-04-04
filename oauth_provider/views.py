@@ -3,7 +3,7 @@ from urllib import urlencode
 import oauth2 as oauth
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponse, HttpResponseBadRequest
+from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseRedirect
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.translation import ugettext as _
 from django.core.urlresolvers import get_callable
@@ -20,6 +20,8 @@ OAUTH_AUTHORIZE_VIEW = 'OAUTH_AUTHORIZE_VIEW'
 OAUTH_CALLBACK_VIEW = 'OAUTH_CALLBACK_VIEW'
 INVALID_PARAMS_RESPONSE = send_oauth_error(oauth.Error(
                                             _('Invalid request parameters.')))
+
+UNSAFE_REDIRECTS = getattr(settings, "OAUTH_UNSAFE_REDIRECTS", False)
 
 @csrf_exempt
 def request_token(request):
@@ -79,7 +81,11 @@ def user_authorization(request, form_class=AuthorizeRequestTokenForm):
             else:
                 args = { 'error': _('Access not granted by user.') }
             if request_token.callback is not None and request_token.callback != OUT_OF_BAND:
-                response = UnsafeRedirect(request_token.get_callback_url(args))
+                callback_url = request_token.get_callback_url(args)
+                if UNSAFE_REDIRECTS:
+                    response = UnsafeRedirect(callback_url)
+                else:
+                    response = HttpResponseRedirect(callback_url)
             else:
                 # try to get custom callback view
                 callback_view_str = getattr(settings, OAUTH_CALLBACK_VIEW,
