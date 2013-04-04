@@ -83,3 +83,23 @@ class OAuthTestsBug24PostWithApplicationJSON(BaseOAuthTestCase):
         response = self.c.post("/oauth/photo/", HTTP_AUTHORIZATION=header, CONTENT_TYPE="application/json")
 
         self.assertEqual(response.status_code, 200)
+
+class OAuthTestsBug2UrlParseNonHttpScheme(BaseOAuthTestCase):
+    def test_non_http_url_callback_scheme(self):
+
+        # @vmihailenco callback example
+        self.request_token_parameters['oauth_callback'] = 'chrome-extension://fnaffgdfmcfbjiifjkhbfbnjljaabiaj.com/chrome_ex_oauth.html?q=1'
+        self._request_token()
+
+        self.c.login(username=self.username, password=self.password)
+        parameters = self.authorization_parameters = {'oauth_token': self.request_token.key}
+        response = self.c.get("/oauth/authorize/", parameters)
+        self.assertEqual(response.status_code, 200)
+
+        # fill form (authorize us)
+        parameters['authorize_access'] = 1
+        response = self.c.post("/oauth/authorize/", parameters)
+        self.assertEqual(response.status_code, 302)
+
+        # assert query part of url is not malformed
+        assert "?q=1&" in response["location"]
