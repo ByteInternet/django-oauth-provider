@@ -169,7 +169,6 @@ class OauthTestIssue24(BaseOAuthTestCase):
             }
         response = self.c.post("/oauth/photo/", urllib.urlencode(parameters, True),
             content_type="application/x-www-form-urlencoded")
-        print response
         self.assertEqual(response.status_code, 200)
 
     def test_post_using_auth_in_header_with_content_type_json_and_PLAINTEXT(self):
