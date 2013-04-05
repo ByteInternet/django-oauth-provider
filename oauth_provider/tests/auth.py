@@ -105,8 +105,8 @@ class BaseOAuthTestCase(TestCase):
 
         self.assertEqual(response.status_code, 200)
         response_params = parse_qs(response.content)
-        self.oauth_token = response_params['oauth_token'][0]
-        self.oauth_token_secret = response_params['oauth_token_secret'][0]
+        self.ACCESS_TOKEN_KEY = response_params['oauth_token'][0]
+        self.ACCESS_TOKEN_SECRET = response_params['oauth_token_secret'][0]
 
         # logout to ensure that will not authorize with session
         self.c.logout()

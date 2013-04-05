@@ -1,4 +1,5 @@
 import time
+import urllib
 from oauth_provider.tests.auth import BaseOAuthTestCase
 import oauth2 as oauth
 import json
@@ -61,7 +62,7 @@ class OauthTestIssue24(BaseOAuthTestCase):
         super(OauthTestIssue24, self).setUp()
 
         #setting the access key/secret to made-up strings
-        access_token = Token(
+        self.access_token = Token(
             key="key",
             secret="secret",
             consumer=self.consumer,
@@ -69,22 +70,22 @@ class OauthTestIssue24(BaseOAuthTestCase):
             token_type=2,
             resource=self.resource
         )
-        access_token.save()
+        self.access_token.save()
 
 
-    def __make_querystring(self, http_method, path, data, content_type):
+    def __make_querystring_with_HMAC_SHA1(self, http_method, path, data, content_type):
         """
-        Utility method for creating a request which is signed using query params
+        Utility method for creating a request which is signed using HMAC_SHA1 method
         """
         consumer = oauth.Consumer(key=self.CONSUMER_KEY, secret=self.CONSUMER_SECRET)
-        token = oauth.Token(key="key", secret="secret")
+        token = oauth.Token(key=self.access_token.key, secret=self.access_token.secret)
 
         url = "http://testserver:80" + path
 
         #if data is json, we want it in the body, else as parameters (i.e. queryparams on get)
         parameters=None
-        body = ''
-        if content_type == "application/json":
+        body = ""
+        if content_type=="application/json":
             body = data
         else:
             parameters = data
@@ -103,11 +104,15 @@ class OauthTestIssue24(BaseOAuthTestCase):
         request.sign_request(signature_method, consumer, token)
         return request.to_url()
 
-    def test_that_initialize_server_request_does_not_include_post_data_in_params(self):
+    def test_that_initialize_server_request_when_custom_content_type(self):
+        """Chceck if post data is not included in params when constent type
+        is not application/x-www-form-urlencoded. It would cause problems only when signature method is
+        HMAC-SHA1
+         """
 
         data = json.dumps({"data": {"foo": "bar"}})
         content_type = "application/json"
-        querystring = self.__make_querystring("POST", "/path/to/post", data, content_type)
+        querystring = self.__make_querystring_with_HMAC_SHA1("POST", "/path/to/post", data, content_type)
 
         #we're just using the request, don't bother faking sending it
         rf = RequestFactory()
@@ -127,8 +132,7 @@ class OauthTestIssue24(BaseOAuthTestCase):
         #check that this does not throw an oauth.Error
         oauth_server.verify_request(oauth_request, consumer, token)
 
-class OAuthTestsBug24PostWithApplicationJSON(BaseOAuthTestCase):
-    def test_post_using_authorization_header(self):
+    def test_post_using_in_authorization_header_and_PLAINTEXT(self):
         self._request_token()
         self._authorize()
 
@@ -136,17 +140,20 @@ class OAuthTestsBug24PostWithApplicationJSON(BaseOAuthTestCase):
             'oauth_consumer_key': self.CONSUMER_KEY,
             'oauth_signature_method': "PLAINTEXT",
             'oauth_version': "1.0",
-            'oauth_token': self.oauth_token,
+            'oauth_token': self.ACCESS_TOKEN_KEY,
             'oauth_timestamp': str(int(time.time())),
             'oauth_nonce': str(int(time.time()))+"nonce",
-            'oauth_signature': "%s&%s" % (self.CONSUMER_SECRET, self.oauth_token_secret),
+            'oauth_signature': "%s&%s" % (self.CONSUMER_SECRET, self.ACCESS_TOKEN_SECRET),
             }
         header = self._get_http_authorization_header(parameters)
         response = self.c.post("/oauth/photo/", HTTP_AUTHORIZATION=header)
 
         self.assertEqual(response.status_code, 200)
 
-    def test_post_using_header_with_content_type_json(self):
+    def test_post_using_auth_in_post_body_and_PLAINTEXT(self):
+        """Check if auth works when authorization data is in post body when
+        content type is pplication/x-www-form-urlencoded
+        """
         self._request_token()
         self._authorize()
 
@@ -154,16 +161,66 @@ class OAuthTestsBug24PostWithApplicationJSON(BaseOAuthTestCase):
             'oauth_consumer_key': self.CONSUMER_KEY,
             'oauth_signature_method': "PLAINTEXT",
             'oauth_version': "1.0",
-            'oauth_token': self.oauth_token,
+            'oauth_token': self.ACCESS_TOKEN_KEY,
             'oauth_timestamp': str(int(time.time())),
             'oauth_nonce': str(int(time.time()))+"nonce",
-            'oauth_signature': "%s&%s" % (self.CONSUMER_SECRET, self.oauth_token_secret),
+            'oauth_signature': "%s&%s" % (self.CONSUMER_SECRET, self.ACCESS_TOKEN_SECRET),
+            "additional_data": "whoop" # additional data
+            }
+        response = self.c.post("/oauth/photo/", urllib.urlencode(parameters, True),
+            content_type="application/x-www-form-urlencoded")
+        print response
+        self.assertEqual(response.status_code, 200)
+
+    def test_post_using_auth_in_header_with_content_type_json_and_PLAINTEXT(self):
+        self._request_token()
+        self._authorize()
+
+        parameters = {
+            'oauth_consumer_key': self.CONSUMER_KEY,
+            'oauth_signature_method': "PLAINTEXT",
+            'oauth_version': "1.0",
+            'oauth_token': self.ACCESS_TOKEN_KEY,
+            'oauth_timestamp': str(int(time.time())),
+            'oauth_nonce': str(int(time.time()))+"nonce",
+            'oauth_signature': "%s&%s" % (self.CONSUMER_SECRET, self.ACCESS_TOKEN_SECRET),
             }
 
         header = self._get_http_authorization_header(parameters)
         response = self.c.post("/oauth/photo/", HTTP_AUTHORIZATION=header, CONTENT_TYPE="application/json")
 
         self.assertEqual(response.status_code, 200)
+
+    def test_post_using_auth_in_body_content_type_and_application_x_www_form_urlencoded(self):
+        """Opposite of test_that_initialize_server_request_when_custom_content_type,
+        If content type is application/x-www-form-urlencoded, post data should be added to params,
+        and it affects signature
+        """
+        self._request_token()
+        self._authorize()
+
+        data={"foo": "bar"}
+        content_type = "application/x-www-form-urlencoded"
+        querystring = self.__make_querystring_with_HMAC_SHA1("POST", "/path/to/post", data, content_type)
+
+        #we're just using the request, don't bother faking sending it
+        rf = RequestFactory()
+        request = rf.post(querystring, urllib.urlencode(data), content_type)
+
+        #this is basically a "remake" of the relevant parts of OAuthAuthentication in django-rest-framework
+        oauth_request = utils.get_oauth_request(request)
+
+        consumer_key = oauth_request.get_parameter('oauth_consumer_key')
+        consumer = oauth_provider_store.get_consumer(request, oauth_request, consumer_key)
+
+        token_param = oauth_request.get_parameter('oauth_token')
+        token = oauth_provider_store.get_access_token(request, oauth_request, consumer, token_param)
+
+        oauth_server, oauth_request = utils.initialize_server_request(request)
+
+        #check that this does not throw an oauth.Error
+        oauth_server.verify_request(oauth_request, consumer, token)
+
 
 class OAuthTestsBug2UrlParseNonHttpScheme(BaseOAuthTestCase):
     def test_non_http_url_callback_scheme(self):
