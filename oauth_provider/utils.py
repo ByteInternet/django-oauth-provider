@@ -111,7 +111,7 @@ def verify_xauth_request(request, oauth_request):
         request.user = user
     return user
 
-def require_params(oauth_request, parameters=[]):
+def require_params(oauth_request, parameters=None):
     """ Ensures that the request contains all required parameters. """
     params = [
         'oauth_consumer_key',
@@ -120,7 +120,8 @@ def require_params(oauth_request, parameters=[]):
         'oauth_signature_method',
         'oauth_timestamp'
     ]
-    params.extend(parameters)
+    if parameters:
+        params.extend(parameters)
 
     missing = list(param for param in params if param not in oauth_request)
     if missing:
