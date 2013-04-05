@@ -23,17 +23,14 @@ def initialize_server_request(request):
 
 
     # Don't include extra parameters when request.method is POST and 
-    # request.MIME['CONTENT_TYPE'] is "application/x-www-form-urlencoded" 
+    # request.META['CONTENT_TYPE'] is "application/x-www-form-urlencoded"
     # (See http://oauth.net/core/1.0a/#consumer_req_param).
-    # But there is an issue with Django's test Client and custom content types
-    # so an ugly test is made here, if you find a better solution...
     parameters = {}
-    if request.method == "POST" and \
-        (request.META.get('CONTENT_TYPE') == "application/x-www-form-urlencoded"
-            or request.META.get('SERVER_NAME') == 'testserver'):
+
+    if request.method == "POST" and (request.META.get('CONTENT_TYPE') == "application/x-www-form-urlencoded"):
         parameters = dict((k, v.encode('utf-8')) for (k, v) in request.REQUEST.iteritems())
 
-    oauth_request = oauth.Request.from_request(request.method, 
+    oauth_request = oauth.Request.from_request(request.method,
                                               request.build_absolute_uri(request.path), 
                                               headers=auth_header,
                                               parameters=parameters,
