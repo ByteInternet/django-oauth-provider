@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import time
+import urllib
 from urlparse import parse_qs, urlparse
 import oauth2
 from oauth_provider.compat import User
@@ -49,7 +50,8 @@ class BaseOAuthTestCase(TestCase):
         elif method==METHOD_URL_QUERY:
             response = self.c.get("/oauth/request_token/", self.request_token_parameters)
         elif method==METHOD_POST_REQUEST_BODY:
-            response = self.c.post("/oauth/request_token/", self.request_token_parameters)
+            body = urllib.urlencode(self.request_token_parameters)
+            response = self.c.post("/oauth/request_token/", body, content_type="application/x-www-form-urlencoded")
         else:
             raise NotImplementedError
 
@@ -99,7 +101,8 @@ class BaseOAuthTestCase(TestCase):
         elif method==METHOD_URL_QUERY:
             response = self.c.get("/oauth/access_token/", parameters)
         elif method==METHOD_POST_REQUEST_BODY:
-            response = self.c.post("/oauth/access_token/", parameters)
+            body = urllib.urlencode(parameters)
+            response = self.c.post("/oauth/access_token/", body, content_type="application/x-www-form-urlencoded")
         else:
             raise NotImplementedError
 
