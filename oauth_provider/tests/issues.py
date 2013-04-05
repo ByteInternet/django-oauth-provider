@@ -1,12 +1,19 @@
 import time
 import re
 
+import oauth2 as oauth
+import json
+
 from django.test import TestCase
 from django.test.client import Client
+from django.test.client import RequestFactory
 
 from oauth_provider.compat import User
 from oauth_provider.models import Resource, Consumer
 from oauth_provider.models import Token
+from oauth_provider import utils
+from oauth_provider.store import store as oauth_provider_store
+from oauth_provider.store import InvalidTokenError
 
 class BaseOAuthTestCase(TestCase):
     def setUp(self):
@@ -100,3 +107,77 @@ class OAuthOutOfBoundTests(BaseOAuthTestCase):
         self.assertEqual(
             response.status_code,
             200)
+
+class OauthTestIssue24(BaseOAuthTestCase):
+    """
+    See https://bitbucket.org/david/django-oauth-plus/issue/24/utilspy-initialize_server_request-should
+    """
+    def setUp(self):
+        super(OauthTestIssue24, self).setUp()
+
+        #setting the access key/secret to made-up strings
+        access_token = Token(
+            key="key",
+            secret="secret",
+            consumer=self.consumer,
+            user=self.jane,
+            token_type=2,
+            resource=self.resource
+        )
+        access_token.save()
+
+
+    def __make_querystring(self, http_method, path, data, content_type):
+        """
+        Utility method for creating a request which is signed using query params
+        """
+        consumer = oauth.Consumer(key=self.CONSUMER_KEY, secret=self.CONSUMER_SECRET)
+        token = oauth.Token(key="key", secret="secret")
+
+        url = "http://testserver:80" + path
+
+        #if data is json, we want it in the body, else as parameters (i.e. queryparams on get)
+        parameters=None
+        body = ''
+        if content_type == "application/json":
+            body = data
+        else:
+            parameters = data
+
+        request = oauth.Request.from_consumer_and_token(
+            consumer=consumer,
+            token=token,
+            http_method=http_method,
+            http_url=url,
+            parameters=parameters,
+            body=body
+        )
+
+        # Sign the request.
+        signature_method = oauth.SignatureMethod_HMAC_SHA1()
+        request.sign_request(signature_method, consumer, token)
+        return request.to_url()
+
+    def test_that_initialize_server_request_does_not_include_post_data_in_params(self):
+
+        data = json.dumps({"data": {"foo": "bar"}})
+        content_type = "application/json"
+        querystring = self.__make_querystring("POST", "/path/to/post", data, content_type)
+
+        #we're just using the request, don't bother faking sending it
+        rf = RequestFactory()
+        request = rf.post(querystring, data, content_type)
+
+        #this is basically a "remake" of the relevant parts of OAuthAuthentication in django-rest-framework
+        oauth_request = utils.get_oauth_request(request)
+
+        consumer_key = oauth_request.get_parameter('oauth_consumer_key')
+        consumer = oauth_provider_store.get_consumer(request, oauth_request, consumer_key)
+
+        token_param = oauth_request.get_parameter('oauth_token')
+        token = oauth_provider_store.get_access_token(request, oauth_request, consumer, token_param)
+
+        oauth_server, oauth_request = utils.initialize_server_request(request)
+
+        #check that this does not throw an oauth.Error
+        oauth_server.verify_request(oauth_request, consumer, token)
