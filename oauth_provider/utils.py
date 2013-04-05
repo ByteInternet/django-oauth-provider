@@ -13,28 +13,8 @@ OAUTH_BLACKLISTED_HOSTNAMES = getattr(settings, 'OAUTH_BLACKLISTED_HOSTNAMES', [
 
 def initialize_server_request(request):
     """Shortcut for initialization."""
-    # Django converts Authorization header in HTTP_AUTHORIZATION
-    # Warning: it doesn't happen in tests but it's useful, do not remove!
-    auth_header = {}
-    if 'Authorization' in request.META:
-        auth_header = {'Authorization': request.META['Authorization']}
-    elif 'HTTP_AUTHORIZATION' in request.META:
-        auth_header =  {'Authorization': request.META['HTTP_AUTHORIZATION']}
+    oauth_request = get_oauth_request(request)
 
-
-    # Don't include extra parameters when request.method is POST and 
-    # request.META['CONTENT_TYPE'] is "application/x-www-form-urlencoded"
-    # (See http://oauth.net/core/1.0a/#consumer_req_param).
-    parameters = {}
-
-    if request.method == "POST" and (request.META.get('CONTENT_TYPE') == "application/x-www-form-urlencoded"):
-        parameters = dict((k, v.encode('utf-8')) for (k, v) in request.REQUEST.iteritems())
-
-    oauth_request = oauth.Request.from_request(request.method,
-                                              request.build_absolute_uri(request.path), 
-                                              headers=auth_header,
-                                              parameters=parameters,
-                                              query_string=request.META.get('QUERY_STRING', ''))
     if oauth_request:
         oauth_server = oauth.Server()
         if 'plaintext' in OAUTH_SIGNATURE_METHODS:
@@ -58,13 +38,29 @@ def send_oauth_error(err=None):
 
 def get_oauth_request(request):
     """ Converts a Django request object into an `oauth2.Request` object. """
-    headers = {}
-    if 'HTTP_AUTHORIZATION' in request.META:
-        headers['Authorization'] = request.META['HTTP_AUTHORIZATION']
-    return oauth.Request.from_request(request.method, 
-                                      request.build_absolute_uri(request.path), 
-                                      headers, 
-                                      dict((k, v.encode('utf-8')) for (k, v) in request.REQUEST.iteritems()))
+    # Django converts Authorization header in HTTP_AUTHORIZATION
+    # Warning: it doesn't happen in tests but it's useful, do not remove!
+    auth_header = {}
+    if 'Authorization' in request.META:
+        auth_header = {'Authorization': request.META['Authorization']}
+    elif 'HTTP_AUTHORIZATION' in request.META:
+        auth_header =  {'Authorization': request.META['HTTP_AUTHORIZATION']}
+
+
+    # Don't include extra parameters when request.method is POST and
+    # request.META['CONTENT_TYPE'] is "application/x-www-form-urlencoded"
+    # (See http://oauth.net/core/1.0a/#consumer_req_param).
+    parameters = {}
+
+    if request.method == "POST" and (request.META.get('CONTENT_TYPE') == "application/x-www-form-urlencoded"):
+        parameters = dict((k, v.encode('utf-8')) for (k, v) in request.REQUEST.iteritems())
+
+    return oauth.Request.from_request(request.method,
+        request.build_absolute_uri(request.path),
+        headers=auth_header,
+        parameters=parameters,
+        query_string=request.META.get('QUERY_STRING', '')
+    )
 
 def verify_oauth_request(request, oauth_request, consumer, token=None):
     """ Helper function to verify requests. """
