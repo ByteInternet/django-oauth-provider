@@ -82,17 +82,15 @@ class BaseOAuthTestCase(TestCase):
 
         # finally access authorized access_token
         oauth_verifier = parse_qs(urlparse(response['Location']).query)['oauth_verifier'][0]
-        parameters = {
-            'oauth_consumer_key': self.CONSUMER_KEY,
+        parameters = self.request_token_parameters
+        parameters.update(
+        {
             'oauth_token': self.request_token.key,
-            'oauth_signature_method': "PLAINTEXT",
             'oauth_signature': "%s&%s" % (self.CONSUMER_SECRET, self.request_token.secret),
             'oauth_timestamp': str(int(time.time())),
             'oauth_nonce': "12981230918711",
-            'oauth_version': "1.0",
             'oauth_verifier': oauth_verifier,
-            'scope': self.resource.name,  # custom argument to specify Protected Resource
-        }
+        })
 
 
         if method==METHOD_AUTHORIZATION_HEADER:
