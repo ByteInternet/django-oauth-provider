@@ -3,11 +3,12 @@ import datetime
 from south.db import db
 from south.v2 import SchemaMigration
 from django.db import models
+from oauth_provider.consts import SECRET_SIZE
 
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        
+
         # Adding model 'Nonce'
         db.create_table('oauth_provider_nonce', (
             ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
@@ -32,7 +33,7 @@ class Migration(SchemaMigration):
             ('name', self.gf('django.db.models.fields.CharField')(max_length=255)),
             ('description', self.gf('django.db.models.fields.TextField')()),
             ('key', self.gf('django.db.models.fields.CharField')(max_length=256)),
-            ('secret', self.gf('django.db.models.fields.CharField')(max_length=16, blank=True)),
+            ('secret', self.gf('django.db.models.fields.CharField')(max_length=SECRET_SIZE, blank=True)),
             ('status', self.gf('django.db.models.fields.SmallIntegerField')(default=1)),
             ('user', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['auth.User'], null=True, blank=True)),
         ))
@@ -42,7 +43,7 @@ class Migration(SchemaMigration):
         db.create_table('oauth_provider_token', (
             ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
             ('key', self.gf('django.db.models.fields.CharField')(max_length=32, null=True, blank=True)),
-            ('secret', self.gf('django.db.models.fields.CharField')(max_length=16, null=True, blank=True)),
+            ('secret', self.gf('django.db.models.fields.CharField')(max_length=SECRET_SIZE, null=True, blank=True)),
             ('token_type', self.gf('django.db.models.fields.SmallIntegerField')()),
             ('timestamp', self.gf('django.db.models.fields.IntegerField')(default=1327884735L)),
             ('is_approved', self.gf('django.db.models.fields.BooleanField')(default=False)),
@@ -57,7 +58,7 @@ class Migration(SchemaMigration):
 
 
     def backwards(self, orm):
-        
+
         # Deleting model 'Nonce'
         db.delete_table('oauth_provider_nonce')
 
@@ -114,7 +115,7 @@ class Migration(SchemaMigration):
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'key': ('django.db.models.fields.CharField', [], {'max_length': '256'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
-            'secret': ('django.db.models.fields.CharField', [], {'max_length': '16', 'blank': 'True'}),
+            'secret': ('django.db.models.fields.CharField', [], {'max_length': str(SECRET_SIZE), 'blank': 'True'}),
             'status': ('django.db.models.fields.SmallIntegerField', [], {'default': '1'}),
             'user': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['auth.User']", 'null': 'True', 'blank': 'True'})
         },
@@ -141,7 +142,7 @@ class Migration(SchemaMigration):
             'is_approved': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'key': ('django.db.models.fields.CharField', [], {'max_length': '32', 'null': 'True', 'blank': 'True'}),
             'resource': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['oauth_provider.Resource']"}),
-            'secret': ('django.db.models.fields.CharField', [], {'max_length': '16', 'null': 'True', 'blank': 'True'}),
+            'secret': ('django.db.models.fields.CharField', [], {'max_length': str(SECRET_SIZE), 'null': 'True', 'blank': 'True'}),
             'timestamp': ('django.db.models.fields.IntegerField', [], {'default': '1327884735L'}),
             'token_type': ('django.db.models.fields.SmallIntegerField', [], {}),
             'user': ('django.db.models.fields.related.ForeignKey', [], {'blank': 'True', 'related_name': "'tokens'", 'null': 'True', 'to': "orm['auth.User']"}),
