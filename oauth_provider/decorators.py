@@ -55,6 +55,8 @@ class CheckOauth(object):
                 if self.resource_name and token.resource.name != self.resource_name:
                     return send_oauth_error(oauth2.Error(_('You are not allowed to access this resource.')))
                 elif consumer and token:
+                    if token.user:
+                        request.user = token.user
                     return view_func(request, *args, **kwargs)
 
             return send_oauth_error(oauth2.Error(_('Invalid request parameters.')))
