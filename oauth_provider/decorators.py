@@ -47,6 +47,7 @@ class CheckOauth(object):
                                     consumer, oauth_request.get_parameter('oauth_token'))
                 except InvalidTokenError:
                     return send_oauth_error(oauth2.Error(_('Invalid access token: %s') % oauth_request.get_parameter('oauth_token')))
+
                 try:
                     self.validate_token(request, consumer, token)
                 except oauth2.Error, e:
@@ -55,6 +56,7 @@ class CheckOauth(object):
                 if self.resource_name and token.resource.name != self.resource_name:
                     return send_oauth_error(oauth2.Error(_('You are not allowed to access this resource.')))
                 elif consumer and token:
+                    request.user = token.user
                     return view_func(request, *args, **kwargs)
 
             return send_oauth_error(oauth2.Error(_('Invalid request parameters.')))
