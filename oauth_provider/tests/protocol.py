@@ -295,7 +295,7 @@ class ProtocolExample(BaseOAuthTestCase):
         """The Service Provider asks Jane to sign-in using her username and password
         """
         self.assertEqual(response.status_code, 302)
-        expected_redirect = 'http://testserver/accounts/login/?next=/oauth/authorize/%3Foauth_token%3D{}'.format(token.key)
+        expected_redirect = 'http://testserver/accounts/login/?next=/oauth/authorize/%3Foauth_token%3D{0}'.format(token.key)
         self.assertEqual(response['Location'], expected_redirect)
 
         # Jane logins
