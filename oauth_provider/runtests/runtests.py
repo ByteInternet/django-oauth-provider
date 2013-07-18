@@ -1,5 +1,6 @@
-# -*- coding: utf-8 -*-
 #!/usr/bin/env python
+
+# -*- coding: utf-8 -*-
 
 # https://github.com/swistakm/django-rest-framework/blob/master/rest_framework/runtests/runtests.py
 import os

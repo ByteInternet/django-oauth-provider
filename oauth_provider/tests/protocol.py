@@ -3,6 +3,8 @@ import cgi
 
 import oauth2 as oauth
 
+from django.test import Client
+
 from oauth_provider.tests.auth import BaseOAuthTestCase
 from oauth_provider.models import Token, Consumer, Resource
 from oauth_provider.compat import User
@@ -10,6 +12,12 @@ from oauth_provider.compat import User
 class ProtocolExample(BaseOAuthTestCase):
     """Set of tests, based on ProtocolExample document
     """
+    def _last_created_request_token(self):
+        return list(Token.objects.filter(token_type=Token.REQUEST))[-1]
+    
+    def _last_created_access_token(self):
+        return list(Token.objects.filter(token_type=Token.ACCESS))[-1]
+    
     def _update_token_from_db(self, request_token):
         """Get fresh copy of the token from the DB"""
         return Token.objects.get(key=request_token.key)
@@ -287,7 +295,7 @@ class ProtocolExample(BaseOAuthTestCase):
         """The Service Provider asks Jane to sign-in using her username and password
         """
         self.assertEqual(response.status_code, 302)
-        expected_redirect = 'http://testserver/profile/login/?next=/oauth/authorize/%3Foauth_token%3D{}'.format(token.key)
+        expected_redirect = 'http://testserver/accounts/login/?next=/oauth/authorize/%3Foauth_token%3D{}'.format(token.key)
         self.assertEqual(response['Location'], expected_redirect)
 
         # Jane logins
