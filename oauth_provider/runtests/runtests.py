@@ -1,5 +1,5 @@
-# -*- coding: utf-8 -*-
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 # https://github.com/swistakm/django-rest-framework/blob/master/rest_framework/runtests/runtests.py
 import os
@@ -26,7 +26,6 @@ def usage():
 def main():
     TestRunner = get_runner(settings)
     test_runner = TestRunner(verbosity=2)
-
 
     if len(sys.argv) == 2:
         test_case = '.' + sys.argv[1]
