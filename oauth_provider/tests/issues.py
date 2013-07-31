@@ -43,8 +43,7 @@ class OAuthTestsBug10(BaseOAuthTestCase):
 
 class OAuthOutOfBoundTests(BaseOAuthTestCase):
     def test_Requesting_user_authorization_succeeds_when_oob(self):
-        self.request_token_parameters['oauth_callback'] = 'oob'
-        self._request_token()
+        self._request_token(oauth_callback="oob")
 
         self.c.login(username=self.username, password=self.password)
         parameters = self.authorization_parameters = {'oauth_token': self.request_token.key}
@@ -134,7 +133,7 @@ class OauthTestIssue24(BaseOAuthTestCase):
 
     def test_post_using_in_authorization_header_and_PLAINTEXT(self):
         self._request_token()
-        self._authorize()
+        self._authorize_and_access_token_using_form()
 
         parameters = {
             'oauth_consumer_key': self.CONSUMER_KEY,
@@ -155,7 +154,7 @@ class OauthTestIssue24(BaseOAuthTestCase):
         content type is pplication/x-www-form-urlencoded
         """
         self._request_token()
-        self._authorize()
+        self._authorize_and_access_token_using_form()
 
         parameters = {
             'oauth_consumer_key': self.CONSUMER_KEY,
@@ -173,7 +172,7 @@ class OauthTestIssue24(BaseOAuthTestCase):
 
     def test_post_using_auth_in_header_with_content_type_json_and_PLAINTEXT(self):
         self._request_token()
-        self._authorize()
+        self._authorize_and_access_token_using_form()
 
         parameters = {
             'oauth_consumer_key': self.CONSUMER_KEY,
@@ -196,7 +195,7 @@ class OauthTestIssue24(BaseOAuthTestCase):
         and it affects signature
         """
         self._request_token()
-        self._authorize()
+        self._authorize_and_access_token_using_form()
 
         data={"foo": "bar"}
         content_type = "application/x-www-form-urlencoded"
@@ -225,8 +224,7 @@ class OAuthTestsBug2UrlParseNonHttpScheme(BaseOAuthTestCase):
     def test_non_http_url_callback_scheme(self):
 
         # @vmihailenco callback example
-        self.request_token_parameters['oauth_callback'] = 'ftp://fnaffgdfmcfbjiifjkhbfbnjljaabiaj.com/chrome_ex_oauth.html?q=1'
-        self._request_token()
+        self._request_token(oauth_callback='ftp://fnaffgdfmcfbjiifjkhbfbnjljaabiaj.com/chrome_ex_oauth.html?q=1')
 
         self.c.login(username=self.username, password=self.password)
         parameters = self.authorization_parameters = {'oauth_token': self.request_token.key}

@@ -14,7 +14,7 @@ class XAuthTestCase(BaseOAuthTestCase):
         self.consumer.save()
         Resource.objects.create(name='all')
 
-    def _access_token(self, method=METHOD_URL_QUERY):
+    def _accesss_token(self, method=METHOD_URL_QUERY):
         parameters = {
             "oauth_consumer_key": self.CONSUMER_KEY,
             "oauth_consumer_secret": self.CONSUMER_SECRET,
@@ -47,7 +47,7 @@ class XAuthTestCase(BaseOAuthTestCase):
         self.ACCESS_TOKEN_SECRET = response_params['oauth_token_secret'][0]
 
     def test_xauth(self):
-        self._access_token()
+        self._access_token(x_auth_mode="client_auth", x_auth_password=self.password, x_auth_username=self.username)
 
         assert self.ACCESS_TOKEN_KEY
         assert self.ACCESS_TOKEN_SECRET
