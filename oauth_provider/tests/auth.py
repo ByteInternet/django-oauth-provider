@@ -14,16 +14,17 @@ METHOD_URL_QUERY = 2
 
 class BaseOAuthTestCase(TestCase):
     def setUp(self):
-        username = self.username = 'jane'
-        password = self.password = 'toto'
-        email = self.email = 'jane@example.com'
-        jane = self.jane = User.objects.create_user(username, email, password)
-        resource = self.resource = Resource(name='photos', url='/oauth/photo/')
-        resource.save()
-        CONSUMER_KEY = self.CONSUMER_KEY = 'dpf43f3p2l4k3l03'
-        CONSUMER_SECRET = self.CONSUMER_SECRET = 'kd94hf93k423kf44'
-        consumer = self.consumer = Consumer(key=CONSUMER_KEY, secret=CONSUMER_SECRET,
-            name='printer.example.com', user=jane)
+        self.username = 'jane'
+        self.password = 'toto'
+        self.email = 'jane@example.com'
+        self.jane = User.objects.create_user(self.username, self.email, self.password)
+        self.resource = Resource.objects.create(name='photos', url='/oauth/photo/')
+
+        self.CONSUMER_KEY = 'dpf43f3p2l4k3l03'
+        self.CONSUMER_SECRET = 'kd94hf93k423kf44'
+
+        consumer = self.consumer = Consumer(key=self.CONSUMER_KEY, secret=self.CONSUMER_SECRET,
+            name='printer.example.com', user=self.jane)
         consumer.save()
 
         self.callback_token = self.callback = 'http://printer.example.com/request_token_ready'
@@ -91,7 +92,6 @@ class BaseOAuthTestCase(TestCase):
             'oauth_nonce': "12981230918711",
             'oauth_verifier': oauth_verifier,
         })
-
 
         if method==METHOD_AUTHORIZATION_HEADER:
             header = self._get_http_authorization_header(parameters)
