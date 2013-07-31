@@ -52,7 +52,7 @@ def get_oauth_request(request):
     # (See http://oauth.net/core/1.0a/#consumer_req_param).
     parameters = {}
 
-    if request.method == "POST" and (request.META.get('CONTENT_TYPE') == "application/x-www-form-urlencoded"):
+    if not auth_header and request.method == "POST" and (request.META.get('CONTENT_TYPE') == "application/x-www-form-urlencoded"):
         parameters = dict((k, v.encode('utf-8')) for (k, v) in request.REQUEST.iteritems())
 
     return oauth.Request.from_request(request.method,

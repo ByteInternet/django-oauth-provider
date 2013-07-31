@@ -7,7 +7,6 @@ from oauth_provider.tests.auth import BaseOAuthTestCase
 class OAuthTestOauthRequiredDecorator(BaseOAuthTestCase):
     def setUp(self):
         # create Resource 'all' for all requests without scope specified
-        Resource.objects.create(name="all")
         super(OAuthTestOauthRequiredDecorator, self).setUp()
 
     def _oauth_signed_get(self, url):
@@ -30,10 +29,8 @@ class OAuthTestOauthRequiredDecorator(BaseOAuthTestCase):
         #ensure there is a Resource object for this scope
         self.resource = Resource.objects.create(name="some")
         #set scope for requested token
-        self.request_token_parameters['scope'] = self.resource.name
-
-        self._request_token()
-        self._authorize()
+        self._request_token(scope=self.resource.name)
+        self._authorize_and_access_token_using_form()
 
         response = self._oauth_signed_get("/oauth/some/")
         self.assertEqual(response.status_code, 200)
@@ -42,10 +39,9 @@ class OAuthTestOauthRequiredDecorator(BaseOAuthTestCase):
         """Tests that view created with @oauth_required("some") decorator won't give access
         when requested using token with different scope
         """
-        #set scope to 'all', notice that view we test is hidden behind 'some' scope
-        self.request_token_parameters['scope'] = "all"
-        self._request_token()
-        self._authorize()
+        #set scope to 'all' - note that view we test is hidden behind 'some' scope
+        self._request_token(scope="all")
+        self._authorize_and_access_token_using_form()
 
         response = self._oauth_signed_get("/oauth/some/")
         self.assertEqual(response.status_code, 401)
@@ -55,9 +51,8 @@ class OAuthTestOauthRequiredDecorator(BaseOAuthTestCase):
         using token without scope specified
         """
         #request token without setting scope
-        self.request_token_parameters.pop('scope')
         self._request_token()
-        self._authorize()
+        self._authorize_and_access_token_using_form()
 
         response = self._oauth_signed_get("/oauth/none/")
         self.assertEqual(response.status_code, 200)
@@ -69,9 +64,8 @@ class OAuthTestOauthRequiredDecorator(BaseOAuthTestCase):
         #ensure there is a Resource object for this scope
         self.resource = Resource.objects.create(name="some_new_scope")
         #set scope to 'all', notice that view we test is hidden behind 'some' scope
-        self.request_token_parameters['scope'] = self.resource.name
-        self._request_token()
-        self._authorize()
+        self._request_token(scope=self.resource.name)
+        self._authorize_and_access_token_using_form()
 
         response = self._oauth_signed_get("/oauth/some/")
         self.assertEqual(response.status_code, 401)

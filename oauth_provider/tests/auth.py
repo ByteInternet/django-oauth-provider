@@ -14,21 +14,28 @@ METHOD_URL_QUERY = 2
 
 class BaseOAuthTestCase(TestCase):
     def setUp(self):
-        username = self.username = 'jane'
-        password = self.password = 'toto'
-        email = self.email = 'jane@example.com'
-        jane = self.jane = User.objects.create_user(username, email, password)
-        resource = self.resource = Resource(name='photos', url='/oauth/photo/')
-        resource.save()
-        CONSUMER_KEY = self.CONSUMER_KEY = 'dpf43f3p2l4k3l03'
-        CONSUMER_SECRET = self.CONSUMER_SECRET = 'kd94hf93k423kf44'
-        consumer = self.consumer = Consumer(key=CONSUMER_KEY, secret=CONSUMER_SECRET,
-            name='printer.example.com', user=jane)
+        self.username = 'jane'
+        self.password = 'toto'
+        self.email = 'jane@example.com'
+        self.jane = User.objects.create_user(self.username, self.email, self.password)
+        self.resource = Resource.objects.create(name='photos', url='/oauth/photo/')
+        Resource.objects.create(name="all")
+
+        self.CONSUMER_KEY = 'dpf43f3p2l4k3l03'
+        self.CONSUMER_SECRET = 'kd94hf93k423kf44'
+
+        consumer = self.consumer = Consumer(key=self.CONSUMER_KEY, secret=self.CONSUMER_SECRET,
+            name='printer.example.com', user=self.jane)
         consumer.save()
 
         self.callback_token = self.callback = 'http://printer.example.com/request_token_ready'
         self.callback_confirmed = True
-        self.request_token_parameters = {
+        self.c = Client()
+
+    def _request_token(self, method=METHOD_URL_QUERY, **parameters_overriden):
+        # The Consumer sends the following HTTP POST request to the
+        # Service Provider:
+        parameters = {
             'oauth_consumer_key': self.CONSUMER_KEY,
             'oauth_signature_method': 'PLAINTEXT',
             'oauth_signature': '%s&' % self.CONSUMER_SECRET,
@@ -36,21 +43,17 @@ class BaseOAuthTestCase(TestCase):
             'oauth_nonce': 'requestnonce',
             'oauth_version': '1.0',
             'oauth_callback': self.callback,
-            'scope': self.resource.name,  # custom argument to specify Protected Resource
+            # 'scope': self.resource.name,  # custom argument to specify Protected Resource
         }
+        parameters.update(parameters_overriden)
 
-        self.c = Client()
-
-    def _request_token(self, method=METHOD_URL_QUERY):
-        # The Consumer sends the following HTTP POST request to the
-        # Service Provider:
         if method==METHOD_AUTHORIZATION_HEADER:
-            header = self._get_http_authorization_header(self.request_token_parameters)
+            header = self._get_http_authorization_header(parameters)
             response = self.c.get("/oauth/request_token/", HTTP_AUTHORIZATION=header)
         elif method==METHOD_URL_QUERY:
-            response = self.c.get("/oauth/request_token/", self.request_token_parameters)
+            response = self.c.get("/oauth/request_token/", parameters)
         elif method==METHOD_POST_REQUEST_BODY:
-            body = urllib.urlencode(self.request_token_parameters)
+            body = urllib.urlencode(parameters)
             response = self.c.post("/oauth/request_token/", body, content_type="application/x-www-form-urlencoded")
         else:
             raise NotImplementedError
@@ -69,7 +72,7 @@ class BaseOAuthTestCase(TestCase):
         self.assert_(not self.request_token.is_approved)
         return response
 
-    def _authorize(self, method=METHOD_URL_QUERY):
+    def _authorize_and_access_token_using_form(self, method=METHOD_URL_QUERY):
         self.c.login(username=self.username, password=self.password)
         parameters = self.authorization_parameters = {'oauth_token': self.request_token.key}
         response = self.c.get("/oauth/authorize/", parameters)
@@ -82,16 +85,31 @@ class BaseOAuthTestCase(TestCase):
 
         # finally access authorized access_token
         oauth_verifier = parse_qs(urlparse(response['Location']).query)['oauth_verifier'][0]
-        parameters = self.request_token_parameters
-        parameters.update(
-        {
-            'oauth_token': self.request_token.key,
-            'oauth_signature': "%s&%s" % (self.CONSUMER_SECRET, self.request_token.secret),
+
+        # logout to ensure that will not authorize with session
+        self.c.logout()
+
+        self._access_token(oauth_verifier=oauth_verifier, oauth_token=self.request_token.key)
+
+    def _access_token(self, method=METHOD_URL_QUERY, **parameters_overriden):
+
+        if hasattr(self, 'request_token'):
+            oauth_signature = "%s&%s" % (self.CONSUMER_SECRET, self.request_token.secret)
+        else:
+            oauth_signature = "%s&" % (self.CONSUMER_SECRET)
+
+        parameters = {
+            'oauth_signature_method': 'PLAINTEXT',
+            'oauth_signature': oauth_signature,
+            'oauth_consumer_key': self.CONSUMER_KEY,
+
             'oauth_timestamp': str(int(time.time())),
             'oauth_nonce': "12981230918711",
-            'oauth_verifier': oauth_verifier,
-        })
 
+            'oauth_version': '1.0',
+            'scope': self.resource.name,  # custom argument to specify Protected Resource
+        }
+        parameters.update(parameters_overriden)
 
         if method==METHOD_AUTHORIZATION_HEADER:
             header = self._get_http_authorization_header(parameters)
@@ -108,9 +126,6 @@ class BaseOAuthTestCase(TestCase):
         response_params = parse_qs(response.content)
         self.ACCESS_TOKEN_KEY = response_params['oauth_token'][0]
         self.ACCESS_TOKEN_SECRET = response_params['oauth_token_secret'][0]
-
-        # logout to ensure that will not authorize with session
-        self.c.logout()
 
     def _get_http_authorization_header(self, parameters):
         HEADERS = oauth2.Request("GET", parameters=parameters).to_header()
@@ -132,12 +147,12 @@ class TestOAuthDifferentAuthorizationMethods(BaseOAuthTestCase):
 
     def test_access_token_with_authorization_header(self):
         self._request_token(METHOD_AUTHORIZATION_HEADER)
-        self._authorize(METHOD_AUTHORIZATION_HEADER)
+        self._authorize_and_access_token_using_form(METHOD_AUTHORIZATION_HEADER)
 
     def test_access_token_with_url_query(self):
         self._request_token(METHOD_URL_QUERY)
-        self._authorize(METHOD_URL_QUERY)
+        self._authorize_and_access_token_using_form(METHOD_URL_QUERY)
 
     def test_access_token_with_post_request_body(self):
         self._request_token(METHOD_POST_REQUEST_BODY)
-        self._authorize(METHOD_POST_REQUEST_BODY)
+        self._authorize_and_access_token_using_form(METHOD_POST_REQUEST_BODY)
