@@ -7,7 +7,7 @@ except ImportError:
 
 from django.utils.translation import ugettext as _
 
-from utils import initialize_server_request, send_oauth_error, get_oauth_request
+from utils import initialize_server_request, send_oauth_error, get_oauth_request, verify_oauth_request
 from consts import OAUTH_PARAMETERS_NAMES
 from store import store, InvalidTokenError
 from functools import wraps
@@ -48,6 +48,9 @@ class CheckOauth(object):
                 except InvalidTokenError:
                     return send_oauth_error(oauth2.Error(_('Invalid access token: %s') % oauth_request.get_parameter('oauth_token')))
 
+                if not self.is_valid_nonce(request, oauth_request):
+                    return send_oauth_error(oauth2.Error(_('Nonce already used or timestamp too old')))
+
                 try:
                     self.validate_token(request, consumer, token)
                 except oauth2.Error, e:
@@ -77,8 +80,13 @@ class CheckOauth(object):
         return is_in(auth_params) or is_in(request.REQUEST)
 
     @staticmethod
+    def is_valid_nonce(request, oauth_request):
+        return store.check_nonce(request, oauth_request, oauth_request['oauth_nonce'], oauth_request['oauth_timestamp'])
+
+    @staticmethod
     def validate_token(request, consumer, token):
         oauth_server, oauth_request = initialize_server_request(request)
+
         return oauth_server.verify_request(oauth_request, consumer, token)
 
 oauth_required = CheckOauth
