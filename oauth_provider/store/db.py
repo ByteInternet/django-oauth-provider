@@ -6,7 +6,7 @@ from django.conf import settings
 from oauth_provider.store import InvalidConsumerError, InvalidTokenError, Store
 from oauth_provider.models import Nonce, Token, Consumer, Resource, VERIFIER_SIZE
 
-NONCE_VALID_PERIOD = getattr(settings, "NONCE_VALID_PERIOD", None)
+NONCE_VALID_PERIOD = getattr(settings, "OAUTH_NONCE_VALID_PERIOD", None)
 
 class ModelStore(Store):
     """
