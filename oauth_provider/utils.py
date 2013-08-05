@@ -67,7 +67,7 @@ def verify_oauth_request(request, oauth_request, consumer, token=None):
     from store import store
 
     # Check nonce
-    if not store.check_nonce(request, oauth_request, oauth_request['oauth_nonce']):
+    if not store.check_nonce(request, oauth_request, oauth_request['oauth_nonce'], oauth_request['oauth_timestamp']):
         return False
 
     # Verify request

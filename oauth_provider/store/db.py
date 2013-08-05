@@ -86,10 +86,10 @@ class ModelStore(Store):
     def get_user_for_consumer(self, request, oauth_request, consumer):
         return consumer.user
 
-    def check_nonce(self, request, oauth_request, nonce):
+    def check_nonce(self, request, oauth_request, nonce, timestamp):
         nonce, created = Nonce.objects.get_or_create(
             consumer_key=oauth_request['oauth_consumer_key'],
             token_key=oauth_request.get('oauth_token', ''),
-            key=nonce
+            key=nonce, timestamp=timestamp,
         )
         return created
