@@ -1,9 +1,14 @@
 import time
 import urllib
-from oauth_provider.tests.auth import BaseOAuthTestCase
-import oauth2 as oauth
 import json
+import datetime
+
+from django.conf import settings
 from django.test.client import RequestFactory
+
+import oauth2 as oauth
+
+from oauth_provider.tests.auth import BaseOAuthTestCase
 from oauth_provider.models import Token
 from oauth_provider import utils
 from oauth_provider.store import store as oauth_provider_store
@@ -238,3 +243,64 @@ class OAuthTestsBug2UrlParseNonHttpScheme(BaseOAuthTestCase):
 
         # assert query part of url is not malformed
         assert "?q=1&" in response["Location"]
+
+class OAuthTestIssue16NoncesCheckedAgainstTimestamp(BaseOAuthTestCase):
+    def test_timestamp_ok(self):
+        self._request_token()
+        self._authorize_and_access_token_using_form()
+
+        parameters = {
+            'oauth_consumer_key': self.CONSUMER_KEY,
+            'oauth_signature_method': "PLAINTEXT",
+            'oauth_version': "1.0",
+            'oauth_token': self.ACCESS_TOKEN_KEY,
+            'oauth_timestamp': str(int(time.time())),
+            'oauth_nonce': str(int(time.time()))+"nonce1",
+            'oauth_signature': "%s&%s" % (self.CONSUMER_SECRET, self.ACCESS_TOKEN_SECRET),
+            }
+
+        response = self.c.get("/oauth/photo/", parameters)
+
+        self.assertEqual(response.status_code, 200)
+
+    def test_timestamp_repeated_nonce(self):
+        self._request_token()
+        self._authorize_and_access_token_using_form()
+
+        timestamp = str(int(time.time()))
+        nonce = timestamp + "nonce"
+        parameters = {
+            'oauth_consumer_key': self.CONSUMER_KEY,
+            'oauth_signature_method': "PLAINTEXT",
+            'oauth_version': "1.0",
+            'oauth_token': self.ACCESS_TOKEN_KEY,
+            'oauth_timestamp': timestamp,
+            'oauth_nonce': nonce,
+            'oauth_signature': "%s&%s" % (self.CONSUMER_SECRET, self.ACCESS_TOKEN_SECRET),
+            }
+
+        response = self.c.get("/oauth/photo/", parameters)
+        self.assertEqual(response.status_code, 200)
+
+        response = self.c.get("/oauth/photo/", parameters)
+        self.assertEqual(response.status_code, 401)
+
+    def test_timestamp_old_nonce(self):
+        self._request_token()
+        self._authorize_and_access_token_using_form()
+
+        #make this nonce older
+        timestamp = str(int(datetime.datetime.now().strftime("%s")) - (settings.OAUTH_NONCE_VALID_PERIOD + 1))
+        nonce = timestamp + "nonce"
+        parameters = {
+            'oauth_consumer_key': self.CONSUMER_KEY,
+            'oauth_signature_method': "PLAINTEXT",
+            'oauth_version': "1.0",
+            'oauth_token': self.ACCESS_TOKEN_KEY,
+            'oauth_timestamp': timestamp,
+            'oauth_nonce': nonce,
+            'oauth_signature': "%s&%s" % (self.CONSUMER_SECRET, self.ACCESS_TOKEN_SECRET),
+            }
+
+        response = self.c.get("/oauth/photo/", parameters)
+        self.assertEqual(response.status_code, 401)

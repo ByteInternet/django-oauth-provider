@@ -47,6 +47,7 @@ INSTALLED_APPS = (
 )
 
 OAUTH_UNSAFE_REDIRECTS = True
+OAUTH_NONCE_VALID_PERIOD = 120
 
 import django
 if django.VERSION >= (1, 5):
