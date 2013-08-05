@@ -1,8 +1,12 @@
 import oauth2 as oauth
+import datetime
+
+from django.conf import settings
 
 from oauth_provider.store import InvalidConsumerError, InvalidTokenError, Store
 from oauth_provider.models import Nonce, Token, Consumer, Resource, VERIFIER_SIZE
 
+NONCE_VALID_PERIOD = getattr(settings, "NONCE_VALID_PERIOD", None)
 
 class ModelStore(Store):
     """
@@ -87,6 +91,11 @@ class ModelStore(Store):
         return consumer.user
 
     def check_nonce(self, request, oauth_request, nonce, timestamp):
+        timestamp = int(timestamp)
+
+        if NONCE_VALID_PERIOD and int(datetime.datetime.now().strftime("%s")) - timestamp > NONCE_VALID_PERIOD:
+            return False
+
         nonce, created = Nonce.objects.get_or_create(
             consumer_key=oauth_request['oauth_consumer_key'],
             token_key=oauth_request.get('oauth_token', ''),

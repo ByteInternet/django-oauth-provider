@@ -238,3 +238,45 @@ class OAuthTestsBug2UrlParseNonHttpScheme(BaseOAuthTestCase):
 
         # assert query part of url is not malformed
         assert "?q=1&" in response["Location"]
+
+class OAuthTestIssue16NoncesCheckedAgainstTimestamp(BaseOAuthTestCase):
+    def test_timestamp_ok(self):
+        self._request_token()
+        self._authorize_and_access_token_using_form()
+
+        parameters = {
+            'oauth_consumer_key': self.CONSUMER_KEY,
+            'oauth_signature_method': "PLAINTEXT",
+            'oauth_version': "1.0",
+            'oauth_token': self.ACCESS_TOKEN_KEY,
+            'oauth_timestamp': str(int(time.time())),
+            'oauth_nonce': str(int(time.time()))+"nonce1",
+            'oauth_signature': "%s&%s" % (self.CONSUMER_SECRET, self.ACCESS_TOKEN_SECRET),
+            }
+
+        response = self.c.get("/oauth/photo/", parameters)
+
+        self.assertEqual(response.status_code, 200)
+
+    def test_timestamp_repeated_nonce(self):
+        self._request_token()
+        self._authorize_and_access_token_using_form()
+
+        timestamp = str(int(time.time()))
+        nonce = timestamp + "nonce"
+        parameters = {
+            'oauth_consumer_key': self.CONSUMER_KEY,
+            'oauth_signature_method': "PLAINTEXT",
+            'oauth_version': "1.0",
+            'oauth_token': self.ACCESS_TOKEN_KEY,
+            'oauth_timestamp': timestamp,
+            'oauth_nonce': nonce,
+            'oauth_signature': "%s&%s" % (self.CONSUMER_SECRET, self.ACCESS_TOKEN_SECRET),
+            }
+
+        response = self.c.get("/oauth/photo/", parameters)
+        self.assertEqual(response.status_code, 200)
+
+        response = self.c.get("/oauth/photo/", parameters)
+        self.assertEqual(response.status_code, 401)
+

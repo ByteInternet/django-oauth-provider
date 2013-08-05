@@ -144,13 +144,14 @@ class Store(object):
         """
         raise NotImplementedError
 
-    def check_nonce(self, request, oauth_request, nonce):
+    def check_nonce(self, request, oauth_request, nonce, timestamp):
         """
         Return `True` if the nonce has not yet been used, `False` otherwise.
 
         `request`: The Django request object.
         `oauth_request`: The `oauth2.Request` object.
         `nonce`: The nonce to check.
+        `timestamp`: nonce timestamp.
         """
         raise NotImplementedError
 
