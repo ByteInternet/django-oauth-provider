@@ -4,9 +4,10 @@ from oauth_provider.tests.auth import BaseOAuthTestCase
 import oauth2 as oauth
 import json
 from django.test.client import RequestFactory
-from oauth_provider.models import Token
+from oauth_provider.models import Token, Resource
 from oauth_provider import utils
 from oauth_provider.store import store as oauth_provider_store
+from urlparse import parse_qs, urlparse
 
 
 class OAuthTestsBug10(BaseOAuthTestCase):
@@ -238,3 +239,37 @@ class OAuthTestsBug2UrlParseNonHttpScheme(BaseOAuthTestCase):
 
         # assert query part of url is not malformed
         assert "?q=1&" in response["Location"]
+
+
+class OAuthTestIssue39(BaseOAuthTestCase):
+    """
+    See https://bitbucket.org/david/django-oauth-plus/issue/39/request-token-scope-unused.
+    """
+    def setUp(self):
+        super(OAuthTestIssue39, self).setUp()
+        Resource.objects.create(name='resource2')
+
+    def test_different_token_scopes(self):
+        self._request_token(scope='all')
+        # Authorization code below copied from BaseOAuthTestCase
+        self.c.login(username=self.username, password=self.password)
+        parameters = self.authorization_parameters = {'oauth_token': self.request_token.key}
+        response = self.c.get("/oauth/authorize/", parameters)
+        self.assertEqual(response.status_code, 200)
+
+        # fill form (authorize us)
+        parameters['authorize_access'] = 1
+        response = self.c.post("/oauth/authorize/", parameters)
+        self.assertEqual(response.status_code, 302)
+
+        # finally access authorized access_token
+        oauth_verifier = parse_qs(urlparse(response['Location']).query)['oauth_verifier'][0]
+
+        # logout to ensure that will not authorize with session
+        self.c.logout()
+        # Changed line - change the scope of access token
+        # access token's scope should be same as request token
+        self._access_token(oauth_verifier=oauth_verifier, oauth_token=self.request_token.key, scope='resource2')
+
+        access_token = Token.objects.get(key=self.ACCESS_TOKEN_KEY)
+        self.assertEqual(access_token.resource.name, 'all')

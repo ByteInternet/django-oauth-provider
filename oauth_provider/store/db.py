@@ -55,15 +55,7 @@ class ModelStore(Store):
         return request_token
 
     def create_access_token(self, request, oauth_request, consumer, request_token):
-        try:
-            scope = oauth_request.get_parameter('scope')
-        except oauth.Error:
-            scope = 'all'
-        try:
-            resource = Resource.objects.get(name=scope)
-        except Resource.DoesNotExist:
-            raise oauth.Error('Resource %s does not exist.' % oauth.escape(scope))
-
+        resource = request_token.resource
         access_token = Token.objects.create_token(
             token_type=Token.ACCESS,
             timestamp=oauth_request['oauth_timestamp'],
