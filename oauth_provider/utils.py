@@ -53,7 +53,7 @@ def get_oauth_request(request):
     parameters = {}
 
     if not auth_header and request.method == "POST" and (request.META.get('CONTENT_TYPE') == "application/x-www-form-urlencoded"):
-        parameters = dict((k, v.encode('utf-8')) for (k, v) in request.REQUEST.iteritems())
+        parameters = dict((k, v.encode('utf-8')) for (k, v) in request.POST.iteritems())
 
     return oauth.Request.from_request(request.method,
         request.build_absolute_uri(request.path),
