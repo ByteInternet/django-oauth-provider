@@ -308,7 +308,7 @@ class OAuthTestIssue41XForwardedProto(BaseOAuthTestCase):
     def test_when_x_forwarded_proto_header_has_valid_protocol(self):
         """Test that signature verifies when X-Forwarded-Proto HTTP header has same protocol as one that was used for signing request
         """
-        url = "https://testserver:80/oauth/none/"
+        url = "https://testserver/oauth/none/"
         kwargs = {
             'wsgi.url_scheme': "http",
             'HTTP_AUTHORIZATION': self._make_GET_auth_header(url),
@@ -318,11 +318,12 @@ class OAuthTestIssue41XForwardedProto(BaseOAuthTestCase):
         self.assertEqual(response.status_code, 200)
 
 
+        url = "http://testserver/oauth/none/"
         kwargs = {
             'wsgi.url_scheme': "https",
             "HTTP_AUTHORIZATION": self._make_GET_auth_header(url),
             "HTTP_X_FORWARDED_PROTO": "http",
         }
-        url = "http://testserver:80/oauth/none/"
+
         response = self.c.get(url.replace('http', 'https'), **kwargs)
         self.assertEqual(response.status_code, 200)
