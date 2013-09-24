@@ -1,6 +1,6 @@
 import time
 import urllib
-from oauth_provider.tests.auth import BaseOAuthTestCase
+from oauth_provider.tests.auth import BaseOAuthTestCase, METHOD_AUTHORIZATION_HEADER
 import oauth2 as oauth
 import json
 from django.test.client import RequestFactory
@@ -238,3 +238,67 @@ class OAuthTestsBug2UrlParseNonHttpScheme(BaseOAuthTestCase):
 
         # assert query part of url is not malformed
         assert "?q=1&" in response["Location"]
+
+class OAuthTestIssue44XForwardedProto(BaseOAuthTestCase):
+
+    def setUp(self):
+        super(OAuthTestIssue44XForwardedProto, self).setUp()
+        self._request_token(METHOD_AUTHORIZATION_HEADER)
+        self._authorize_and_access_token_using_form(METHOD_AUTHORIZATION_HEADER)
+        print
+
+    def _make_GET_auth_header(self, url):
+        token = oauth.Token(self.ACCESS_TOKEN_KEY, self.ACCESS_TOKEN_SECRET)
+        consumer = oauth.Consumer(self.CONSUMER_KEY, self.CONSUMER_SECRET)
+
+        request = oauth.Request.from_consumer_and_token(
+            consumer=consumer,
+            token=token,
+            http_method="GET",
+            http_url=url,
+        )
+
+        # Sign the request.
+        signature_method = oauth.SignatureMethod_HMAC_SHA1()
+        request.sign_request(signature_method, consumer, token)
+        return request.to_header()["Authorization"]
+
+    def test_when_same_protocol(self):
+        """Test that signature vierifies when protocol used for signing is same as used in request
+        """
+        url = "http://testserver/oauth/none/"
+        response = self.c.get(url, HTTP_AUTHORIZATION=self._make_GET_auth_header(url))
+        self.assertEqual(response.status_code, 200)
+
+        url = "https://testserver:80/oauth/none/"
+        response = self.c.get(url, HTTP_AUTHORIZATION=self._make_GET_auth_header(url))
+        self.assertEqual(response.status_code, 200)
+
+    def test_when_protocol_mismatch(self):
+        """Test that signature does not vierifies when protocol is diffrent from that which was used for signing request
+        """
+        url = "https://testserver:80/oauth/none/"
+        response = self.c.get(url.replace('https', 'http'), HTTP_AUTHORIZATION=self._make_GET_auth_header(url))
+        self.assertEqual(response.status_code, 401)
+
+        url = "http://testserver:80/oauth/none/"
+        response = self.c.get(url.replace('http', 'https'), HTTP_AUTHORIZATION=self._make_GET_auth_header(url))
+        print response
+        self.assertEqual(response.status_code, 401)
+
+    def test_when_x_forwarded_proto_header_has_valid_protocol(self):
+        """Test that signature verifies when X-Forwarded-Proto HTTP header has same protocol as one that was used for signing request
+        """
+        url = "https://testserver:80/oauth/none/"
+        response = self.c.get(url.replace('https', 'http'),
+                              HTTP_AUTHORIZATION=self._make_GET_auth_header(url),
+                              HTTP_X_FORWARDED_PROTO='https',
+        )
+        self.assertEqual(response.status_code, 200)
+
+        url = "http://testserver:80/oauth/none/"
+        response = self.c.get(url.replace('http', 'https'),
+                              HTTP_AUTHORIZATION=self._make_GET_auth_header(url),
+                              HTTP_X_FORWARDED_PROTO='http',
+        )
+        self.assertEqual(response.status_code, 200)
