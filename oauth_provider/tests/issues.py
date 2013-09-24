@@ -5,7 +5,7 @@ import oauth2 as oauth
 import json
 from django.test.client import RequestFactory
 from oauth_provider.models import Token
-from oauth_provider import utils
+from oauth_provider import utils, responses
 from oauth_provider.store import store as oauth_provider_store
 
 
@@ -267,38 +267,62 @@ class OAuthTestIssue41XForwardedProto(BaseOAuthTestCase):
         """Test that signature vierifies when protocol used for signing is same as used in request
         """
         url = "http://testserver/oauth/none/"
-        response = self.c.get(url, HTTP_AUTHORIZATION=self._make_GET_auth_header(url))
+        kwargs = {
+            "HTTP_AUTHORIZATION": self._make_GET_auth_header(url),
+        }
+        response = self.c.get(url.replace('http', 'https'), **kwargs)
         self.assertEqual(response.status_code, 200)
 
         url = "https://testserver:80/oauth/none/"
-        response = self.c.get(url, HTTP_AUTHORIZATION=self._make_GET_auth_header(url))
+        kwargs = {
+            # this tells django test client to pretend it was https request
+            'wsgi.url_scheme': "https",
+            "HTTP_AUTHORIZATION": self._make_GET_auth_header(url),
+        }
+        response = self.c.get(url, **kwargs)
         self.assertEqual(response.status_code, 200)
+
 
     def test_when_protocol_mismatch(self):
         """Test that signature does not vierifies when protocol is diffrent from that which was used for signing request
         """
         url = "https://testserver:80/oauth/none/"
-        response = self.c.get(url.replace('https', 'http'), HTTP_AUTHORIZATION=self._make_GET_auth_header(url))
+        kwargs = {
+            'wsgi.url_scheme': "http",
+            "HTTP_AUTHORIZATION": self._make_GET_auth_header(url),
+        }
+        response = self.c.get(url.replace('https', 'http'), **kwargs)
+        assert response == responses.COULD_NOT_VERIFY_OAUTH_REQUEST_RESPONSE
         self.assertEqual(response.status_code, 401)
 
         url = "http://testserver:80/oauth/none/"
-        response = self.c.get(url.replace('http', 'https'), HTTP_AUTHORIZATION=self._make_GET_auth_header(url))
-        print response
+        kwargs = {
+            # this tells django test client to pretend it was https request
+            'wsgi.url_scheme': "https",
+            "HTTP_AUTHORIZATION": self._make_GET_auth_header(url),
+        }
+        response = self.c.get(url.replace('http', 'https'), **kwargs)
+        assert response == responses.COULD_NOT_VERIFY_OAUTH_REQUEST_RESPONSE
         self.assertEqual(response.status_code, 401)
 
     def test_when_x_forwarded_proto_header_has_valid_protocol(self):
         """Test that signature verifies when X-Forwarded-Proto HTTP header has same protocol as one that was used for signing request
         """
         url = "https://testserver:80/oauth/none/"
-        response = self.c.get(url.replace('https', 'http'),
-                              HTTP_AUTHORIZATION=self._make_GET_auth_header(url),
-                              HTTP_X_FORWARDED_PROTO='https',
-        )
+        kwargs = {
+            'wsgi.url_scheme': "http",
+            'HTTP_AUTHORIZATION': self._make_GET_auth_header(url),
+            'HTTP_X_FORWARDED_PROTO': 'https',
+        }
+        response = self.c.get(url.replace('https', 'http'), **kwargs)
         self.assertEqual(response.status_code, 200)
 
+
+        kwargs = {
+            'wsgi.url_scheme': "https",
+            "HTTP_AUTHORIZATION": self._make_GET_auth_header(url),
+            "HTTP_X_FORWARDED_PROTO": "http",
+        }
         url = "http://testserver:80/oauth/none/"
-        response = self.c.get(url.replace('http', 'https'),
-                              HTTP_AUTHORIZATION=self._make_GET_auth_header(url),
-                              HTTP_X_FORWARDED_PROTO='http',
-        )
+        response = self.c.get(url.replace('http', 'https'), **kwargs)
         self.assertEqual(response.status_code, 200)
