@@ -266,11 +266,12 @@ class ProtocolExample(BaseOAuthTestCase):
         parameters['oauth_signature'] = 'wrongsignature'
         parameters['oauth_nonce'] = 'anotheraccessresourcenonce'
         response = self.c.get("/oauth/photo/", parameters)
+
         self.assertEqual(response.status_code, 401)
-        self.assertTrue(response.content.startswith(
-                        'Invalid signature. Expected signature base string: GET&http%3A%2F%2F'))
+        self.assertTrue(response.content.startswith('Could not verify OAuth request.'))
 
         response = self.c.get("/oauth/photo/")
+
         self.assertEqual(response.status_code, 401)
         self.assertEqual(response.content, 'Invalid request parameters.')
 
