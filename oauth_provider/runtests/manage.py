@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # put django-oauth in PYTHONPATH
 import sys, os
 sys.path = [os.path.join(os.getcwd(), '../../')] + sys.path
