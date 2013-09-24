@@ -239,10 +239,10 @@ class OAuthTestsBug2UrlParseNonHttpScheme(BaseOAuthTestCase):
         # assert query part of url is not malformed
         assert "?q=1&" in response["Location"]
 
-class OAuthTestIssue44XForwardedProto(BaseOAuthTestCase):
+class OAuthTestIssue41XForwardedProto(BaseOAuthTestCase):
 
     def setUp(self):
-        super(OAuthTestIssue44XForwardedProto, self).setUp()
+        super(OAuthTestIssue41XForwardedProto, self).setUp()
         self._request_token(METHOD_AUTHORIZATION_HEADER)
         self._authorize_and_access_token_using_form(METHOD_AUTHORIZATION_HEADER)
         print
