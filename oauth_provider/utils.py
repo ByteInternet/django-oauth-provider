@@ -1,5 +1,5 @@
 import oauth2 as oauth
-from urlparse import urlparse
+from urlparse import urlparse, urlunparse
 
 from django.conf import settings
 from django.http import HttpResponse, HttpResponseBadRequest
@@ -55,8 +55,14 @@ def get_oauth_request(request):
     if not auth_header and request.method == "POST" and (request.META.get('CONTENT_TYPE') == "application/x-www-form-urlencoded"):
         parameters = dict((k, v.encode('utf-8')) for (k, v) in request.POST.iteritems())
 
+    absolute_uri = request.build_absolute_uri(request.path)
+
+    if "HTTP_X_FORWARDED_PROTO" in request.META:
+        scheme = request.META["HTTP_X_FORWARDED_PROTO"]
+        absolute_uri = urlunparse((scheme, ) + urlparse(absolute_uri)[1:])
+
     return oauth.Request.from_request(request.method,
-        request.build_absolute_uri(request.path),
+        absolute_uri,
         headers=auth_header,
         parameters=parameters,
         query_string=request.META.get('QUERY_STRING', '')

@@ -1,4 +1,4 @@
-import oauth2
+import oauth2 as oauth
 
 try:
     from functools import update_wrapper
@@ -7,9 +7,10 @@ except ImportError:
 
 from django.utils.translation import ugettext as _
 
+from responses import INVALID_PARAMS_RESPONSE, INVALID_CONSUMER_RESPONSE, COULD_NOT_VERIFY_OAUTH_REQUEST_RESPONSE, INVALID_SCOPE_RESPONSE
 from utils import initialize_server_request, send_oauth_error, get_oauth_request, verify_oauth_request
 from consts import OAUTH_PARAMETERS_NAMES
-from store import store, InvalidTokenError
+from store import store, InvalidTokenError, InvalidConsumerError
 from functools import wraps
 
 
@@ -38,55 +39,32 @@ class CheckOauth(object):
 
         @wraps(view_func)
         def wrapped_view(request, *args, **kwargs):
-            if self.is_valid_request(request):
-                oauth_request = get_oauth_request(request)
-                consumer = store.get_consumer(request, oauth_request,
-                                oauth_request.get_parameter('oauth_consumer_key'))
-                try:
-                    token = store.get_access_token(request, oauth_request,
-                                    consumer, oauth_request.get_parameter('oauth_token'))
-                except InvalidTokenError:
-                    return send_oauth_error(oauth2.Error(_('Invalid access token: %s') % oauth_request.get_parameter('oauth_token')))
+            oauth_request = get_oauth_request(request)
+            if oauth_request is None:
+                return INVALID_PARAMS_RESPONSE
 
-                if not self.is_valid_nonce(request, oauth_request):
-                    return send_oauth_error(oauth2.Error(_('Nonce already used or timestamp too old')))
+            try:
+                consumer = store.get_consumer(request, oauth_request, oauth_request['oauth_consumer_key'])
+            except InvalidConsumerError:
+                return INVALID_CONSUMER_RESPONSE
 
-                try:
-                    self.validate_token(request, consumer, token)
-                except oauth2.Error, e:
-                    return send_oauth_error(e)
+            try:
+                token = store.get_access_token(request, oauth_request, consumer, oauth_request.get_parameter('oauth_token'))
+            except InvalidTokenError:
+                return send_oauth_error(oauth.Error(_('Invalid access token: %s') % oauth_request.get_parameter('oauth_token')))
 
-                if self.resource_name and token.resource.name != self.resource_name:
-                    return send_oauth_error(oauth2.Error(_('You are not allowed to access this resource.')))
-                elif consumer and token:
-                    if token.user:
-                        request.user = token.user
-                    return view_func(request, *args, **kwargs)
+            if not verify_oauth_request(request, oauth_request, consumer, token):
+                return COULD_NOT_VERIFY_OAUTH_REQUEST_RESPONSE
 
-            return send_oauth_error(oauth2.Error(_('Invalid request parameters.')))
+            if self.resource_name and token.resource.name != self.resource_name:
+                return INVALID_SCOPE_RESPONSE
+
+
+            if token.user:
+                request.user = token.user
+            return view_func(request, *args, **kwargs)
 
         return wrapped_view
 
-    @staticmethod
-    def is_valid_request(request):
-        """
-        Checks whether the required parameters are either in
-        the http-authorization header sent by some clients,
-        which is by the way the preferred method according to
-        OAuth spec, but otherwise fall back to `GET` and `POST`.
-        """
-        is_in = lambda l: all((p in l) for p in OAUTH_PARAMETERS_NAMES)
-        auth_params = request.META.get("HTTP_AUTHORIZATION", [])
-        return is_in(auth_params) or is_in(request.REQUEST)
-
-    @staticmethod
-    def is_valid_nonce(request, oauth_request):
-        return store.check_nonce(request, oauth_request, oauth_request['oauth_nonce'], oauth_request['oauth_timestamp'])
-
-    @staticmethod
-    def validate_token(request, consumer, token):
-        oauth_server, oauth_request = initialize_server_request(request)
-
-        return oauth_server.verify_request(oauth_request, consumer, token)
 
 oauth_required = CheckOauth

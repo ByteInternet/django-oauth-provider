@@ -1,15 +1,17 @@
 ## -*- coding: utf-8 -*-
 from pprint import pprint
 import time
+import urllib
 from oauth_provider.models import Resource
-from oauth_provider.tests.auth import BaseOAuthTestCase
+from oauth_provider.tests.auth import BaseOAuthTestCase, METHOD_POST_REQUEST_BODY, METHOD_AUTHORIZATION_HEADER, METHOD_URL_QUERY
+
 
 class OAuthTestOauthRequiredDecorator(BaseOAuthTestCase):
     def setUp(self):
         # create Resource 'all' for all requests without scope specified
         super(OAuthTestOauthRequiredDecorator, self).setUp()
 
-    def _oauth_signed_get(self, url):
+    def _oauth_signed_get(self, url, method=METHOD_URL_QUERY):
         parameters = {
             'oauth_consumer_key': self.CONSUMER_KEY,
             'oauth_signature_method': "PLAINTEXT",
@@ -20,7 +22,19 @@ class OAuthTestOauthRequiredDecorator(BaseOAuthTestCase):
             'oauth_signature': "%s&%s" % (self.CONSUMER_SECRET, self.ACCESS_TOKEN_SECRET),
             "additional_data": "whoop" # some additional data
             }
-        response = self.c.get(url, parameters)
+
+
+        if method==METHOD_AUTHORIZATION_HEADER:
+            header = self._get_http_authorization_header(parameters)
+            response = self.c.get(url, HTTP_AUTHORIZATION=header)
+        elif method==METHOD_URL_QUERY:
+            response = self.c.get(url, parameters)
+        elif method==METHOD_POST_REQUEST_BODY:
+            body = urllib.urlencode(parameters)
+            response = self.c.post(url, body, content_type="application/x-www-form-urlencoded")
+        else:
+            raise NotImplementedError
+
         return response
 
     def test_resource_some_scope_view_authorized(self):
@@ -69,3 +83,27 @@ class OAuthTestOauthRequiredDecorator(BaseOAuthTestCase):
 
         response = self._oauth_signed_get("/oauth/some/")
         self.assertEqual(response.status_code, 401)
+
+    def test_get_with_header_auth(self):
+        #request token without setting scope
+        self._request_token()
+        self._authorize_and_access_token_using_form()
+
+        response = self._oauth_signed_get("/oauth/none/", method=METHOD_AUTHORIZATION_HEADER)
+        self.assertEqual(response.status_code, 200)
+
+    def test_get_with_url_query_auth(self):
+        #request token without setting scope
+        self._request_token()
+        self._authorize_and_access_token_using_form()
+
+        response = self._oauth_signed_get("/oauth/none/", method=METHOD_URL_QUERY)
+        self.assertEqual(response.status_code, 200)
+
+    def test_get_with_request_body_auth(self):
+        #request token without setting scope
+        self._request_token()
+        self._authorize_and_access_token_using_form()
+
+        response = self._oauth_signed_get("/oauth/none/", method=METHOD_POST_REQUEST_BODY)
+        self.assertEqual(response.status_code, 200)

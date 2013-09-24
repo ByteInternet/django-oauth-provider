@@ -11,6 +11,7 @@ from django.core.urlresolvers import get_callable
 from decorators import oauth_required
 from forms import AuthorizeRequestTokenForm
 from oauth_provider.compat import UnsafeRedirect
+from responses import INVALID_PARAMS_RESPONSE, INVALID_CONSUMER_RESPONSE, COULD_NOT_VERIFY_OAUTH_REQUEST_RESPONSE
 from store import store, InvalidConsumerError, InvalidTokenError
 from utils import verify_oauth_request, get_oauth_request, require_params, send_oauth_error
 from utils import is_xauth_request, verify_xauth_request
@@ -18,8 +19,6 @@ from consts import OUT_OF_BAND
 
 OAUTH_AUTHORIZE_VIEW = 'OAUTH_AUTHORIZE_VIEW'
 OAUTH_CALLBACK_VIEW = 'OAUTH_CALLBACK_VIEW'
-INVALID_PARAMS_RESPONSE = send_oauth_error(oauth.Error(
-                                            _('Invalid request parameters.')))
 
 UNSAFE_REDIRECTS = getattr(settings, "OAUTH_UNSAFE_REDIRECTS", False)
 
@@ -39,10 +38,10 @@ def request_token(request):
     try:
         consumer = store.get_consumer(request, oauth_request, oauth_request['oauth_consumer_key'])
     except InvalidConsumerError:
-        return HttpResponseBadRequest('Invalid Consumer.')
+        return INVALID_CONSUMER_RESPONSE
 
     if not verify_oauth_request(request, oauth_request, consumer):
-        return HttpResponseBadRequest('Could not verify OAuth request.')
+        return COULD_NOT_VERIFY_OAUTH_REQUEST_RESPONSE
 
     try:
         request_token = store.create_request_token(request, oauth_request, consumer, oauth_request['oauth_callback'])
