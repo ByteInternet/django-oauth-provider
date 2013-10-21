@@ -10,7 +10,7 @@ from django.test.client import RequestFactory
 import oauth2 as oauth
 
 from oauth_provider.tests.auth import BaseOAuthTestCase, METHOD_AUTHORIZATION_HEADER
-from oauth_provider.models import Token, Resource
+from oauth_provider.models import Token, Scope
 from oauth_provider import utils, responses
 from oauth_provider.store import store as oauth_provider_store
 
@@ -73,7 +73,7 @@ class OauthTestIssue24(BaseOAuthTestCase):
             consumer=self.consumer,
             user=self.jane,
             token_type=2,
-            resource=self.resource
+            scope=self.scope
         )
         self.access_token.save()
 
@@ -403,7 +403,7 @@ class OAuthTestIssue39(BaseOAuthTestCase):
     """
     def setUp(self):
         super(OAuthTestIssue39, self).setUp()
-        Resource.objects.create(name='resource2')
+        Scope.objects.create(name='scope2')
 
     def test_different_token_scopes(self):
         self._request_token(scope='all')
@@ -425,8 +425,8 @@ class OAuthTestIssue39(BaseOAuthTestCase):
         self.c.logout()
         # Changed line - change the scope of access token
         # access token's scope should be same as request token
-        self._access_token(oauth_verifier=oauth_verifier, oauth_token=self.request_token.key, scope='resource2')
+        self._access_token(oauth_verifier=oauth_verifier, oauth_token=self.request_token.key, scope='scope2')
 
         access_token = Token.objects.get(key=self.ACCESS_TOKEN_KEY)
-        self.assertEqual(access_token.resource.name, 'all')
+        self.assertEqual(access_token.scope.name, 'all')
 

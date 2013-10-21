@@ -6,7 +6,7 @@ import oauth2
 from oauth_provider.compat import User
 from django.test import TestCase, Client
 import re
-from oauth_provider.models import Resource, Consumer, Token
+from oauth_provider.models import Scope, Consumer, Token
 
 METHOD_AUTHORIZATION_HEADER = 0
 METHOD_POST_REQUEST_BODY = 1
@@ -18,8 +18,8 @@ class BaseOAuthTestCase(TestCase):
         self.password = 'toto'
         self.email = 'jane@example.com'
         self.jane = User.objects.create_user(self.username, self.email, self.password)
-        self.resource = Resource.objects.create(name='photos', url='/oauth/photo/')
-        Resource.objects.create(name="all")
+        self.scope = Scope.objects.create(name='photos', url='/oauth/photo/')
+        Scope.objects.create(name="all")
 
         self.CONSUMER_KEY = 'dpf43f3p2l4k3l03'
         self.CONSUMER_SECRET = 'kd94hf93k423kf44'
@@ -43,7 +43,7 @@ class BaseOAuthTestCase(TestCase):
             'oauth_nonce': 'requestnonce',
             'oauth_version': '1.0',
             'oauth_callback': self.callback,
-            # 'scope': self.resource.name,  # custom argument to specify Protected Resource
+            # 'scope': self.scope.name,  # custom argument to specify Protected Resource
         }
         parameters.update(parameters_overriden)
 
@@ -107,7 +107,7 @@ class BaseOAuthTestCase(TestCase):
             'oauth_nonce': "12981230918711",
 
             'oauth_version': '1.0',
-            'scope': self.resource.name,  # custom argument to specify Protected Resource
+            'scope': self.scope.name,  # custom argument to specify Protected Resource
         }
         parameters.update(parameters_overriden)
 
@@ -131,7 +131,7 @@ class BaseOAuthTestCase(TestCase):
         HEADERS = oauth2.Request("GET", parameters=parameters).to_header()
         authorization_header = HEADERS["Authorization"]
         # patch header with scope
-        authorization_header += ", scope=%s" % self.resource.name
+        authorization_header += ", scope=%s" % self.scope.name
         return authorization_header
 
 class TestOAuthDifferentAuthorizationMethods(BaseOAuthTestCase):

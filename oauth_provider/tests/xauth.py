@@ -3,7 +3,7 @@ import time
 import urllib
 from urlparse import parse_qs
 
-from oauth_provider.models import Resource
+from oauth_provider.models import Scope
 from oauth_provider.tests.auth import BaseOAuthTestCase, METHOD_URL_QUERY, METHOD_AUTHORIZATION_HEADER, METHOD_POST_REQUEST_BODY
 
 
@@ -12,7 +12,7 @@ class XAuthTestCase(BaseOAuthTestCase):
         super(XAuthTestCase, self).setUp()
         self.consumer.xauth_allowed = True
         self.consumer.save()
-        Resource.objects.create(name='all')
+        Scope.objects.create(name='all')
 
     def _accesss_token(self, method=METHOD_URL_QUERY):
         parameters = {

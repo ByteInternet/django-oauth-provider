@@ -2,13 +2,13 @@
 from pprint import pprint
 import time
 import urllib
-from oauth_provider.models import Resource
+from oauth_provider.models import Scope
 from oauth_provider.tests.auth import BaseOAuthTestCase, METHOD_POST_REQUEST_BODY, METHOD_AUTHORIZATION_HEADER, METHOD_URL_QUERY
 
 
 class OAuthTestOauthRequiredDecorator(BaseOAuthTestCase):
     def setUp(self):
-        # create Resource 'all' for all requests without scope specified
+        # create Scope 'all' for all requests without scope specified
         super(OAuthTestOauthRequiredDecorator, self).setUp()
 
     def _oauth_signed_get(self, url, method=METHOD_URL_QUERY):
@@ -40,16 +40,16 @@ class OAuthTestOauthRequiredDecorator(BaseOAuthTestCase):
     def test_resource_some_scope_view_authorized(self):
         """Tests view that was created using @oauth_required("some") decorator
         """
-        #ensure there is a Resource object for this scope
-        self.resource = Resource.objects.create(name="some")
+        #ensure there is a Scope object for this scope
+        self.scope = Scope.objects.create(name="some")
         #set scope for requested token
-        self._request_token(scope=self.resource.name)
+        self._request_token(scope=self.scope.name)
         self._authorize_and_access_token_using_form()
 
         response = self._oauth_signed_get("/oauth/some/")
         self.assertEqual(response.status_code, 200)
 
-    def test_resource_some_scope_view_not_authorized(self):
+    def test_scope_some_scope_view_not_authorized(self):
         """Tests that view created with @oauth_required("some") decorator won't give access
         when requested using token with different scope
         """
@@ -75,10 +75,10 @@ class OAuthTestOauthRequiredDecorator(BaseOAuthTestCase):
         """Tests that view created with @oauth_required decorator won't give access
         when requested using token with scope!="all"
         """
-        #ensure there is a Resource object for this scope
-        self.resource = Resource.objects.create(name="some_new_scope")
+        #ensure there is a Scope object for this scope
+        self.scope = Scope.objects.create(name="some_new_scope")
         #set scope to 'all', notice that view we test is hidden behind 'some' scope
-        self._request_token(scope=self.resource.name)
+        self._request_token(scope=self.scope.name)
         self._authorize_and_access_token_using_form()
 
         response = self._oauth_signed_get("/oauth/some/")

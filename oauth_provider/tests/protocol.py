@@ -6,7 +6,7 @@ import oauth2 as oauth
 from django.test import Client
 
 from oauth_provider.tests.auth import BaseOAuthTestCase
-from oauth_provider.models import Token, Consumer, Resource
+from oauth_provider.models import Token, Consumer, Resource, Scope
 from oauth_provider.compat import User
 
 class ProtocolExample(BaseOAuthTestCase):
@@ -85,7 +85,7 @@ class ProtocolExample(BaseOAuthTestCase):
         response = self.c.get("/oauth/request_token/", parameters)
 
         self.assertEqual(response.status_code, 401)
-        self.assertEqual(response.content, 'Resource videos does not exist.')
+        self.assertEqual(response.content, 'Scope videos does not exist.')
 
     def test_oob_callback(self):
         # If you do not provide any callback (i.e. oob), the Service Provider SHOULD display the value of the verification code
@@ -225,7 +225,7 @@ class ProtocolExample(BaseOAuthTestCase):
             timestamp=str(int(time.time())),
             consumer=Consumer.objects.get(key=self.CONSUMER_KEY),
             user=jane,
-            resource=Resource.objects.get(name='photos'))
+            scope=Scope.objects.get(name='photos'))
         new_request_token.is_approved = True
         new_request_token.save()
         parameters = self._make_access_token_parameters(new_request_token)
@@ -245,7 +245,7 @@ class ProtocolExample(BaseOAuthTestCase):
             timestamp=str(int(time.time())),
             consumer=Consumer.objects.get(key=self.CONSUMER_KEY),
             user=jane,
-            resource=Resource.objects.get(name='photos'))
+            scope=Scope.objects.get(name='photos'))
         new_request_token.is_approved = False
         new_request_token.save()
 
@@ -393,7 +393,7 @@ class ProtocolExample(BaseOAuthTestCase):
         # Note that an "Invalid signature" error will be raised here if the
         # token is not revoked by Jane because we reuse a previously used one.
         parameters['oauth_signature'] = signature
-        parameters['oauth_nonce'] = 'yetanotheraccessresourcenonce'
-        response = self.c.get(self.resource.url, parameters)
+        parameters['oauth_nonce'] = 'yetanotheraccessscopenonce'
+        response = self.c.get(self.scope.url, parameters)
         self.assertEqual(response.status_code, 401)
         self.assertTrue(response.content.startswith('Invalid access token:'))
