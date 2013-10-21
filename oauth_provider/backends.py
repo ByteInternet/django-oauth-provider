@@ -7,6 +7,8 @@ class XAuthAuthenticationBackend(object):
     """Custom Authentication Backend. Supports both username and email as
      identification
     """
+    supports_anonymous_user = False
+
     def authenticate(self, x_auth_username=None, x_auth_password=None,
                      x_auth_mode=None):
         """Authenticates a user through the combination
