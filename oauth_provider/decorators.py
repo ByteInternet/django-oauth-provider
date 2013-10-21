@@ -24,8 +24,8 @@ class CheckOauth(object):
     CheckOAuth object is used as a method decorator, the view function
     is properly bound to its instance.
     """
-    def __init__(self, resource_name=None):
-        self.resource_name = resource_name
+    def __init__(self, scope_name=None):
+        self.scope_name = scope_name
 
     def __new__(cls, arg=None):
         if not callable(arg):
@@ -56,7 +56,7 @@ class CheckOauth(object):
             if not verify_oauth_request(request, oauth_request, consumer, token):
                 return COULD_NOT_VERIFY_OAUTH_REQUEST_RESPONSE
 
-            if self.resource_name and token.resource.name != self.resource_name:
+            if self.scope_name and token.scope.name != self.scope_name:
                 return INVALID_SCOPE_RESPONSE
 
 

@@ -1,17 +1,19 @@
 from django.contrib import admin
 
-from models import Resource, Consumer, Token
+from models import Scope, Consumer, Token
 
-class ResourceAdmin(admin.ModelAdmin):
-	pass
-	
+class ScopeAdmin(admin.ModelAdmin):
+    pass
+
+
 class ConsumerAdmin(admin.ModelAdmin):
-	raw_id_fields = ['user',]
+    raw_id_fields = ['user']
+
 
 class TokenAdmin(admin.ModelAdmin):
-	raw_id_fields = ['user', 'consumer', 'resource']
-	
+    raw_id_fields = ['user', 'consumer', 'scope']
 
-admin.site.register(Resource, ResourceAdmin)
+
+admin.site.register(Scope, ScopeAdmin)
 admin.site.register(Consumer, ConsumerAdmin)
 admin.site.register(Token, TokenAdmin)

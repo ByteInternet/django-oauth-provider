@@ -2,13 +2,13 @@ from django.db import models
 
 
 class TokenManager(models.Manager):
-    def create_token(self, consumer, token_type, timestamp, resource, 
+    def create_token(self, consumer, token_type, timestamp, scope,
             user=None, callback=None, callback_confirmed=False):
         """Shortcut to create a token with random key/secret."""
         token, created = self.get_or_create(consumer=consumer, 
                                             token_type=token_type, 
                                             timestamp=timestamp,
-                                            resource=resource,
+                                            scope=scope,
                                             user=user,
                                             callback=callback,
                                             callback_confirmed=callback_confirmed)

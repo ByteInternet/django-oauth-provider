@@ -4,7 +4,7 @@ import datetime
 from django.conf import settings
 
 from oauth_provider.store import InvalidConsumerError, InvalidTokenError, Store
-from oauth_provider.models import Nonce, Token, Consumer, Resource, VERIFIER_SIZE
+from oauth_provider.models import Nonce, Token, Consumer, Scope, VERIFIER_SIZE
 
 NONCE_VALID_PERIOD = getattr(settings, "OAUTH_NONCE_VALID_PERIOD", None)
 
@@ -30,15 +30,15 @@ class ModelStore(Store):
         except oauth.Error:
             scope = 'all'
         try:
-            resource = Resource.objects.get(name=scope)
-        except Resource.DoesNotExist:
-            raise oauth.Error('Resource %s does not exist.' % oauth.escape(scope))
+            scope = Scope.objects.get(name=scope)
+        except Scope.DoesNotExist:
+            raise oauth.Error('Scope %s does not exist.' % oauth.escape(scope))
         
         token = Token.objects.create_token(
             token_type=Token.REQUEST,
             consumer=Consumer.objects.get(key=oauth_request['oauth_consumer_key']),
             timestamp=oauth_request['oauth_timestamp'],
-            resource=resource,
+            scope=scope,
         )
         token.set_callback(callback)
         token.save()
@@ -59,13 +59,13 @@ class ModelStore(Store):
         return request_token
 
     def create_access_token(self, request, oauth_request, consumer, request_token):
-        resource = request_token.resource
+        scope = request_token.scope
         access_token = Token.objects.create_token(
             token_type=Token.ACCESS,
             timestamp=oauth_request['oauth_timestamp'],
             consumer=Consumer.objects.get(key=consumer.key),
             user=request_token.user,
-            resource=resource,
+            scope=scope,
         )
         request_token.delete()
         return access_token
