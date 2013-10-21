@@ -22,13 +22,19 @@ class Nonce(models.Model):
         return u"Nonce %s for %s" % (self.key, self.consumer_key)
 
 
-class Resource(models.Model):
+class Scope(models.Model):
     name = models.CharField(max_length=255)
     url = models.TextField(max_length=MAX_URL_LENGTH)
     is_readonly = models.BooleanField(default=True)
 
     def __unicode__(self):
         return u"Resource %s with url %s" % (self.name, self.url)
+
+
+class Resource(Scope):
+
+    class Meta:
+        proxy = True
 
 
 class Consumer(models.Model):
@@ -68,8 +74,16 @@ class Token(models.Model):
     
     user = models.ForeignKey(AUTH_USER_MODEL, null=True, blank=True, related_name='tokens')
     consumer = models.ForeignKey(Consumer)
-    resource = models.ForeignKey(Resource)
-    
+    scope = models.ForeignKey(Scope)
+
+    @property
+    def resource(self):
+        return self.scope
+
+    @resource.setter
+    def resource(self, value):
+        self.scope = value
+
     ## OAuth 1.0a stuff
     verifier = models.CharField(max_length=VERIFIER_SIZE)
     callback = models.CharField(max_length=MAX_URL_LENGTH, null=True, blank=True)
