@@ -85,7 +85,7 @@ class ProtocolExample(BaseOAuthTestCase):
         response = self.c.get("/oauth/request_token/", parameters)
 
         self.assertEqual(response.status_code, 401)
-        self.assertEqual(response.content, 'Scope videos does not exist.')
+        self.assertEqual(response.content, 'Scope does not exist.')
 
     def test_oob_callback(self):
         # If you do not provide any callback (i.e. oob), the Service Provider SHOULD display the value of the verification code

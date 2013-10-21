@@ -52,8 +52,7 @@ class OAuthTestOauthRequiredDecorator(BaseOAuthTestCase):
         """Tests that view created with @oauth_required("some") decorator won't give access
         when requested using token with different scope
         """
-        #set scope to 'all' - note that view we test is hidden behind 'some' scope
-        self._request_token(scope="all")
+        self._request_token()
         self._authorize_and_access_token_using_form()
 
         response = self._oauth_signed_get("/oauth/some/")
