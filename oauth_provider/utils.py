@@ -102,14 +102,13 @@ def verify_xauth_request(request, oauth_request):
 
     Returns a user if valid or None otherwise
     """
-    if not oauth_request.get_parameter('x_auth_mode') == 'client_auth':
-        return None
+    user = authenticate(
+        x_auth_username=oauth_request.get_parameter('x_auth_username'),
+        x_auth_password=oauth_request.get_parameter('x_auth_password'),
+        x_auth_mode=oauth_request.get_parameter('x_auth_mode')
+    )
 
-    x_auth_username = oauth_request.get_parameter('x_auth_username')
-    x_auth_password = oauth_request.get_parameter('x_auth_password')
-    user = authenticate(username=x_auth_username, password=x_auth_password)
-
-    if user is not None:
+    if user:
         request.user = user
     return user
 

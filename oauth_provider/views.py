@@ -1,12 +1,14 @@
 from urllib import urlencode
 
-import oauth2 as oauth
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth import authenticate
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseRedirect
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.translation import ugettext as _
 from django.core.urlresolvers import get_callable
+
+import oauth2 as oauth
 
 from decorators import oauth_required
 from forms import AuthorizeRequestTokenForm
@@ -14,7 +16,7 @@ from oauth_provider.compat import UnsafeRedirect
 from responses import INVALID_PARAMS_RESPONSE, INVALID_CONSUMER_RESPONSE, COULD_NOT_VERIFY_OAUTH_REQUEST_RESPONSE
 from store import store, InvalidConsumerError, InvalidTokenError
 from utils import verify_oauth_request, get_oauth_request, require_params, send_oauth_error
-from utils import is_xauth_request, verify_xauth_request
+from utils import is_xauth_request
 from consts import OUT_OF_BAND
 
 OAUTH_AUTHORIZE_VIEW = 'OAUTH_AUTHORIZE_VIEW'
@@ -178,10 +180,17 @@ def access_token(request):
         # Check Signature
         if not verify_oauth_request(request, oauth_request, consumer):
             return HttpResponseBadRequest('Could not verify xAuth request.')
-        
-        # Check Username/Password 
-        if is_xauth and not verify_xauth_request(request, oauth_request):
+
+        user = authenticate(
+            x_auth_username=oauth_request.get_parameter('x_auth_username'),
+            x_auth_password=oauth_request.get_parameter('x_auth_password'),
+            x_auth_mode=oauth_request.get_parameter('x_auth_mode')
+        )
+
+        if not user:
             return HttpResponseBadRequest('xAuth username or password is not valid')
+        else:
+            request.user = user
         
         # Handle Request Token
         try:
