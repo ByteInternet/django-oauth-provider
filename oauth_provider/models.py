@@ -2,6 +2,7 @@ import uuid
 import urllib
 import urlparse
 from time import time
+import warnings
 import oauth2 as oauth
 from django.db import models
 
@@ -32,6 +33,10 @@ class Scope(models.Model):
 
 
 class Resource(Scope):
+
+    def __init__(self, *args, **kwargs):
+        warnings.warn("oauth_provider.Resource model is deprecated, use oauth_provider.Scope instead", DeprecationWarning)
+        super(Resource, self).__init__(*args, **kwargs)
 
     class Meta:
         proxy = True
