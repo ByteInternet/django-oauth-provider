@@ -20,9 +20,8 @@ class OAuthTestOauthRequiredDecorator(BaseOAuthTestCase):
             'oauth_timestamp': str(int(time.time())),
             'oauth_nonce': str(int(time.time()))+"nonce",
             'oauth_signature': "%s&%s" % (self.CONSUMER_SECRET, self.ACCESS_TOKEN_SECRET),
-            "additional_data": "whoop" # some additional data
+            "additional_data": "whoop",  # some additional data
             }
-
 
         if method==METHOD_AUTHORIZATION_HEADER:
             header = self._get_http_authorization_header(parameters)
@@ -61,8 +60,8 @@ class OAuthTestOauthRequiredDecorator(BaseOAuthTestCase):
         self.assertEqual(response.status_code, 401)
 
     def test_resource_None_view(self):
-        """Tests that view created using @oauth_required decorator gives access when requested
-        using token without scope specified
+        """Tests that view created using @oauth_required decorator gives access
+        when requested using token without scope specified
         """
         #request token without setting scope
         self._request_token()
@@ -77,7 +76,6 @@ class OAuthTestOauthRequiredDecorator(BaseOAuthTestCase):
         """
         #ensure there is a Scope object for this scope
         self.scope = Scope.objects.create(name="some_new_scope")
-        #set scope to 'all', notice that view we test is hidden behind 'some' scope
         self._request_token(scope=self.scope.name)
         self._authorize_and_access_token_using_form()
 

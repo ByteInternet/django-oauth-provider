@@ -12,7 +12,6 @@ class XAuthTestCase(BaseOAuthTestCase):
         super(XAuthTestCase, self).setUp()
         self.consumer.xauth_allowed = True
         self.consumer.save()
-        Scope.objects.create(name='all')
 
     def _accesss_token(self, method=METHOD_URL_QUERY):
         parameters = {

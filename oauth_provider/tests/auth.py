@@ -19,7 +19,6 @@ class BaseOAuthTestCase(TestCase):
         self.email = 'jane@example.com'
         self.jane = User.objects.create_user(self.username, self.email, self.password)
         self.scope = Scope.objects.create(name='photos', url='/oauth/photo/')
-        Scope.objects.create(name="all")
 
         self.CONSUMER_KEY = 'dpf43f3p2l4k3l03'
         self.CONSUMER_SECRET = 'kd94hf93k423kf44'

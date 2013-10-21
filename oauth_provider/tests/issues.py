@@ -403,10 +403,11 @@ class OAuthTestIssue39(BaseOAuthTestCase):
     """
     def setUp(self):
         super(OAuthTestIssue39, self).setUp()
+        Scope.objects.create(name='scope1')
         Scope.objects.create(name='scope2')
 
     def test_different_token_scopes(self):
-        self._request_token(scope='all')
+        self._request_token(scope='scope1')
         # Authorization code below copied from BaseOAuthTestCase
         self.c.login(username=self.username, password=self.password)
         parameters = self.authorization_parameters = {'oauth_token': self.request_token.key}
@@ -428,5 +429,5 @@ class OAuthTestIssue39(BaseOAuthTestCase):
         self._access_token(oauth_verifier=oauth_verifier, oauth_token=self.request_token.key, scope='scope2')
 
         access_token = Token.objects.get(key=self.ACCESS_TOKEN_KEY)
-        self.assertEqual(access_token.scope.name, 'all')
+        self.assertEqual(access_token.scope.name, 'scope1')
 
