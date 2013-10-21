@@ -9,13 +9,14 @@ from oauth_provider.compat import AUTH_USER_MODEL
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        db.rename_table('oauth_provider_resource', 'oauth_provider_scope')
-        db.rename_column('oauth_provider_token', 'resource_id', 'scope_id')
+        db.rename_table(u'oauth_provider_resource', u'oauth_provider_scope')
+        db.rename_column(u'oauth_provider_token', u'resource_id', u'scope_id')
+        db.send_create_signal(u'oauth_provider', [u'Scope'])
 
     def backwards(self, orm):
-        db.rename_table('oauth_provider_scope', 'oauth_provider_resource')
-        db.rename_column('oauth_provider_token', 'scope_id', 'resource_id')
-
+        db.rename_table(u'oauth_provider_scope', u'oauth_provider_resource')
+        db.rename_column(u'oauth_provider_token', u'scope_id', u'resource_id')
+        db.send_create_signal(u'oauth_provider', [u'Resource'])
 
     models = {
         u'auth.group': {
@@ -73,8 +74,8 @@ class Migration(SchemaMigration):
             'timestamp': ('django.db.models.fields.PositiveIntegerField', [], {'db_index': 'True'}),
             'token_key': ('django.db.models.fields.CharField', [], {'max_length': '32'})
         },
-        u'oauth_provider.resource': {
-            'Meta': {'object_name': 'Resource'},
+        u'oauth_provider.scope': {
+            'Meta': {'object_name': 'Scope'},
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'is_readonly': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
@@ -88,7 +89,7 @@ class Migration(SchemaMigration):
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'is_approved': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'key': ('django.db.models.fields.CharField', [], {'max_length': '32', 'null': 'True', 'blank': 'True'}),
-            'resource': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['oauth_provider.Resource']"}),
+            'scope': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['oauth_provider.Scope']"}),
             'secret': ('django.db.models.fields.CharField', [], {'max_length': '16', 'null': 'True', 'blank': 'True'}),
             'timestamp': ('django.db.models.fields.IntegerField', [], {'default': '1382371788L'}),
             'token_type': ('django.db.models.fields.SmallIntegerField', [], {}),
