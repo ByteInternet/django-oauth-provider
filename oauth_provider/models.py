@@ -79,7 +79,7 @@ class Token(models.Model):
     
     user = models.ForeignKey(AUTH_USER_MODEL, null=True, blank=True, related_name='tokens')
     consumer = models.ForeignKey(Consumer)
-    scope = models.ForeignKey(Scope)
+    scope = models.ForeignKey(Scope, null=True, blank=True)
 
     @property
     def resource(self):

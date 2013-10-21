@@ -26,13 +26,13 @@ class ModelStore(Store):
 
     def create_request_token(self, request, oauth_request, consumer, callback):
         try:
-            scope = oauth_request.get_parameter('scope')
+            scope = Scope.objects.get(name=oauth_request.get_parameter('scope'))
         except oauth.Error:
-            scope = 'all'
-        try:
-            scope = Scope.objects.get(name=scope)
+            # oauth.Error means that scope wasn't specified
+            scope = None
         except Scope.DoesNotExist:
-            raise oauth.Error('Scope %s does not exist.' % oauth.escape(scope))
+            # Scope.DoesNotExist means that specified scope doesn't exist in db
+            raise oauth.Error('Scope does not exist.')
         
         token = Token.objects.create_token(
             token_type=Token.REQUEST,

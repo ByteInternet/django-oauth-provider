@@ -56,9 +56,9 @@ class CheckOauth(object):
             if not verify_oauth_request(request, oauth_request, consumer, token):
                 return COULD_NOT_VERIFY_OAUTH_REQUEST_RESPONSE
 
-            if self.scope_name and token.scope.name != self.scope_name:
+            if self.scope_name and (not token.scope
+                                    or token.scope.name != self.scope_name):
                 return INVALID_SCOPE_RESPONSE
-
 
             if token.user:
                 request.user = token.user
