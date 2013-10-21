@@ -47,7 +47,17 @@ class XAuthTestCase(BaseOAuthTestCase):
         self.ACCESS_TOKEN_SECRET = response_params['oauth_token_secret'][0]
 
     def test_xauth(self):
-        self._access_token(x_auth_mode="client_auth", x_auth_password=self.password, x_auth_username=self.username)
+        self._access_token(x_auth_mode="client_auth",
+                           x_auth_password=self.password,
+                           x_auth_username=self.username)
+
+        assert self.ACCESS_TOKEN_KEY
+        assert self.ACCESS_TOKEN_SECRET
+
+    def test_xauth_using_email(self):
+        self._access_token(x_auth_mode="client_auth",
+                           x_auth_password=self.password,
+                           x_auth_username=self.email)
 
         assert self.ACCESS_TOKEN_KEY
         assert self.ACCESS_TOKEN_SECRET
