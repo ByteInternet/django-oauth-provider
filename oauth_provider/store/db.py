@@ -82,7 +82,7 @@ class ModelStore(Store):
     def get_user_for_consumer(self, request, oauth_request, consumer):
         return consumer.user
 
-    def check_nonce(self, request, oauth_request, nonce, timestamp):
+    def check_nonce(self, request, oauth_request, nonce, timestamp=0):
         timestamp = int(timestamp)
 
         if NONCE_VALID_PERIOD and int(datetime.datetime.now().strftime("%s")) - timestamp > NONCE_VALID_PERIOD:
