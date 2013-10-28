@@ -27,7 +27,22 @@ except:
     get_random_string = lambda length: ''.join([random.choice('abcdefghijklmnopqrstuvwxyz'
                                     'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789') for i in range(length)])
 
-if django.VERSION >= (1,4):
+try:
+    from django.utils.timezone import now
+except ImportError:
+    import datetime
+    try:
+        # this is fallback for old versions of django
+        import pytz
+        from functools import partial
+        now = partial(datetime.datetime.now, tz=pytz.UTC)
+    except ImportError:
+        # if there is no pytz and this is old version of django, probably
+        # no one cares for timezones
+        now = datetime.datetime.now
+
+
+if django.VERSION >= (1, 4):
     from django.http import HttpResponse
     class UnsafeRedirect(HttpResponse):
         def __init__(self, url, *args, **kwargs):
