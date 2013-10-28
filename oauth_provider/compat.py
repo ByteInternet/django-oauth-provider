@@ -17,11 +17,11 @@ if django.VERSION >= (1, 5):
     AUTH_USER_MODEL  = settings.AUTH_USER_MODEL
 else:
     from django.contrib.auth.models import User
-    AUTH_USER_MODEL  = "auth.User"
+    AUTH_USER_MODEL = "auth.User"
 
 try:
     from django.utils.crypto import get_random_string
-except:
+except ImportError:
     import random
     # fallback for older versions of django (<=1.3). You shouldn't use them
     get_random_string = lambda length: ''.join([random.choice('abcdefghijklmnopqrstuvwxyz'
@@ -44,6 +44,7 @@ except ImportError:
 
 if django.VERSION >= (1, 4):
     from django.http import HttpResponse
+
     class UnsafeRedirect(HttpResponse):
         def __init__(self, url, *args, **kwargs):
             super(UnsafeRedirect, self).__init__(*args, status=302, **kwargs)
