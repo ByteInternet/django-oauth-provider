@@ -47,9 +47,9 @@ def get_oauth_request(request):
         auth_header =  {'Authorization': request.META['HTTP_AUTHORIZATION']}
 
 
-    # Don't include extra parameters when request.method is POST and
-    # request.META['CONTENT_TYPE'] is "application/x-www-form-urlencoded"
-    # (See http://oauth.net/core/1.0a/#consumer_req_param).
+    # include POST parameters if content type is
+    # 'application/x-www-form-urlencoded' and request
+    # see: http://tools.ietf.org/html/rfc5849#section-3.4.1.3.1
     parameters = {}
 
     if not auth_header and request.method == "POST" and (request.META.get('CONTENT_TYPE') == "application/x-www-form-urlencoded"):
