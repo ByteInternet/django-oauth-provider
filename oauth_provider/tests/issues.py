@@ -431,3 +431,93 @@ class OAuthTestIssue39(BaseOAuthTestCase):
         access_token = Token.objects.get(key=self.ACCESS_TOKEN_KEY)
         self.assertEqual(access_token.scope.name, 'scope1')
 
+
+class OAuthTestIssue44PostRequestBodyInSignature(BaseOAuthTestCase):
+    def test_POST_with_x_www_form_urlencoded_body_params_and_auth_header(self):
+        """Test issue when user's request has authorization header and uses
+        application/x-www-form-urlencoded content type with some
+        request body parameters.
+
+        note: In this case both POST and GET parameters should be included in
+        signature base string, so we test GET and POST together
+        note: behaviour defined in http://tools.ietf.org/html/rfc5849#section-3.4.1.3.1
+        """
+        # get valid access token
+        self._request_token()
+        self._authorize_and_access_token_using_form()
+
+        # init request params and headers
+        get_params = {"foo": "bar"}
+        body_params = {"some": "param", "other": "param"}
+        content_type = "application/x-www-form-urlencoded"
+        header = self._make_auth_header_with_HMAC_SHA1('post', "/oauth/photo/", get_params, body_params, True)
+
+        body = urllib.urlencode(body_params)
+
+        response = self.c.post(
+            # this is workaround to have both POST & GET params in this request
+            "/oauth/photo/?%s" % urllib.urlencode(get_params),
+            data=body,
+            HTTP_AUTHORIZATION=header["Authorization"],
+            content_type=content_type
+        )
+
+        self.assertEqual(response.status_code, 200)
+
+
+    def test_POST_with_x_www_form_urlencoded_body_params_and_auth_header_unauthorized(self):
+        """Test issue when user's request has authorization header and uses
+        application/x-www-form-urlencoded content type with some
+        request body parameters, but signature was generated without body
+        params.
+        """
+        # get valid access token
+        self._request_token()
+        self._authorize_and_access_token_using_form()
+
+        # init request params and headers
+        get_params = {"foo": "bar"}
+        body_params = {"some": "param", "other": "param"}
+        content_type = "application/x-www-form-urlencoded"
+        header = self._make_auth_header_with_HMAC_SHA1('post', "/oauth/photo/", get_params, {}, True)
+
+        body = urllib.urlencode(body_params)
+
+        response = self.c.post(
+            # this is workaround to have both POST & GET params in this request
+            "/oauth/photo/?%s" % urllib.urlencode(get_params),
+            data=body,
+            HTTP_AUTHORIZATION=header["Authorization"],
+            content_type=content_type
+        )
+
+        self.assertEqual(response.status_code, 401)
+
+    def _make_auth_header_with_HMAC_SHA1(self, http_method, path, get_params, body_params, is_form_encoded):
+        """make auth header, take in consideration both get and post body_params
+        """
+        consumer = oauth.Consumer(key=self.CONSUMER_KEY, secret=self.CONSUMER_SECRET)
+        token = oauth.Token(key=self.ACCESS_TOKEN_KEY, secret=self.ACCESS_TOKEN_SECRET)
+
+        url = "http://testserver:80" + path
+
+        body = urllib.urlencode(body_params)
+
+        params = {}
+        params.update(get_params)
+        params.update(body_params)
+
+        request = oauth.Request.from_consumer_and_token(
+            consumer=consumer, token=token,
+            http_method=http_method, http_url=url,
+            is_form_encoded=is_form_encoded,
+            body=body,
+            # it seems that body parameter isn't enough to have body params
+            # in signature base string
+            parameters=params
+        )
+
+        # Sign the request.
+        signature_method = oauth.SignatureMethod_HMAC_SHA1()
+        request.sign_request(signature_method, consumer, token)
+        return request.to_header()
