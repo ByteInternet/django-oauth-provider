@@ -52,7 +52,7 @@ def get_oauth_request(request):
     # see: http://tools.ietf.org/html/rfc5849#section-3.4.1.3.1
     parameters = {}
 
-    if not auth_header and request.method == "POST" and (request.META.get('CONTENT_TYPE') == "application/x-www-form-urlencoded"):
+    if request.method == "POST" and request.META.get('CONTENT_TYPE') == "application/x-www-form-urlencoded":
         parameters = dict((k, v.encode('utf-8')) for (k, v) in request.POST.iteritems())
 
     absolute_uri = request.build_absolute_uri(request.path)
