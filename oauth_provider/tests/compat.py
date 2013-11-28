@@ -8,8 +8,8 @@ class Issue45ErrorLoadingOauthStoreModule(TestCase):
         self.assertIsNotNone(store)
 
     def test_import_user_from_compat(self):
-        from oauth_provider.compat import User
+        from oauth_provider.compat import get_user_model
         from oauth_provider.compat import AUTH_USER_MODEL
 
-        self.assertIsNotNone(User)
+        self.assertIsNotNone(get_user_model())
         self.assertIsNotNone(AUTH_USER_MODEL)

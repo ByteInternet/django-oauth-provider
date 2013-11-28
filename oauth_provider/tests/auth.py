@@ -1,16 +1,21 @@
 # -*- coding: utf-8 -*-
 import time
 import urllib
-from urlparse import parse_qs, urlparse
-import oauth2
-from oauth_provider.compat import User
-from django.test import TestCase, Client
 import re
+from urlparse import parse_qs, urlparse
+from django.test import TestCase, Client
+
+import oauth2
+
 from oauth_provider.models import Scope, Consumer, Token
+from oauth_provider.compat import get_user_model
+
+User = get_user_model()
 
 METHOD_AUTHORIZATION_HEADER = 0
 METHOD_POST_REQUEST_BODY = 1
 METHOD_URL_QUERY = 2
+
 
 class BaseOAuthTestCase(TestCase):
     def setUp(self):

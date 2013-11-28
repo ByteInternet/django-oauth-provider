@@ -7,7 +7,10 @@ from django.test import Client
 
 from oauth_provider.tests.auth import BaseOAuthTestCase
 from oauth_provider.models import Token, Consumer, Resource, Scope
-from oauth_provider.compat import User
+from oauth_provider.compat import get_user_model
+
+User = get_user_model()
+
 
 class ProtocolExample(BaseOAuthTestCase):
     """Set of tests, based on ProtocolExample document
