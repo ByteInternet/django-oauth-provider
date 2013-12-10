@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 import django.core.validators
-from compat import User
+from compat import get_user_model
+
+User = get_user_model()
 
 
 class XAuthAuthenticationBackend(object):

@@ -6,7 +6,7 @@ import warnings
 import oauth2 as oauth
 from django.db import models
 
-from oauth_provider.compat import User, AUTH_USER_MODEL, get_random_string
+from oauth_provider.compat import AUTH_USER_MODEL, get_random_string
 from oauth_provider.managers import TokenManager
 from oauth_provider.consts import KEY_SIZE, SECRET_SIZE, CONSUMER_KEY_SIZE, CONSUMER_STATES,\
     PENDING, VERIFIER_SIZE, MAX_URL_LENGTH, OUT_OF_BAND
