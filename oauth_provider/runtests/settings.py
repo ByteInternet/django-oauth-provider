@@ -61,12 +61,12 @@ if django.VERSION >= (1, 5):
     INSTALLED_APPS += ('test_app',)
     AUTH_USER_MODEL = 'test_app.TestUser'
 
-try:
-    import xmlrunner
-except ImportError:
-    pass
-else:
-    TEST_RUNNER = 'xmlrunner.extra.djangotestrunner.XMLTestRunner'
-    TEST_OUTPUT_VERBOSE = True
-    TEST_OUTPUT_DESCRIPTIONS = True
-    TEST_OUTPUT_DIR = 'junitxml'
+# try:
+#     import xmlrunner
+# except ImportError:
+#     pass
+# else:
+#     TEST_RUNNER = 'xmlrunner.extra.djangotestrunner.XMLTestRunner'
+#     TEST_OUTPUT_VERBOSE = True
+#     TEST_OUTPUT_DESCRIPTIONS = True
+#     TEST_OUTPUT_DIR = 'junitxml'

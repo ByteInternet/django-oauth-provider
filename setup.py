@@ -10,6 +10,7 @@ def reqs(*f):
         os.path.join(os.getcwd(), *f)).readlines()]))
 
 install_requires = reqs('requirements.txt')
+test_requires = reqs('test-requirements.txt')
 
 setup(
     name='django-oauth-plus',
@@ -32,8 +33,6 @@ setup(
     # svn and CVS by default
     include_package_data=True,
     zip_safe=False,
-    # Tells setuptools to download setuptools_hg before running setup.py so
-    # it can find the data files under Hg version control.
-    setup_requires=['setuptools_hg'],
+    test_requires=test_requires,
     install_requires=install_requires,
 )
