@@ -290,14 +290,14 @@ class ProtocolExample(BaseOAuthTestCase):
 
         parameters = {'oauth_token': token.key}
 
-        """The Consumer redirects Jane's browser to the Service Provider User Authorization URL
-        to obtain Jane's approval for accessing her private photos.
-        """
+        # The Consumer redirects Jane's browser to the Service Provider User
+        # Authorization URL to obtain Jane's approval for accessing her private
+        #  photos.
 
         response = self.c.get("/oauth/authorize/", parameters)
 
-        """The Service Provider asks Jane to sign-in using her username and password
-        """
+        # The Service Provider asks Jane to sign-in using her username and password
+
         self.assertEqual(response.status_code, 302)
         expected_redirect = 'http://testserver/accounts/login/?next=/oauth/authorize/%3Foauth_token%3D{0}'.format(token.key)
         self.assertEqual(response['Location'], expected_redirect)
@@ -305,9 +305,9 @@ class ProtocolExample(BaseOAuthTestCase):
         # Jane logins
         self.c.login(username='jane', password='toto')
 
-        """If successful, Service Provider asks her if she approves granting printer.example.com
-        access to her private photos.
-        """
+        # If successful, Service Provider asks her if she approves granting
+        # printer.example.com access to her private photos.
+
         response = self.c.get("/oauth/authorize/", parameters)
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.content.startswith(
@@ -328,13 +328,9 @@ class ProtocolExample(BaseOAuthTestCase):
         token = self._last_created_request_token()  # get from the DB updated token
         self.assertTrue(token.is_approved)
 
-        """
-            Obtaining an Access Token
-        """
-
-        """Now that the Consumer knows Jane approved the Request Token,
-        it asks the Service Provider to exchange it for an Access Token
-        """
+        ## Obtaining an Access Token
+        # Now that the Consumer knows Jane approved the Request Token,
+        #it asks the Service Provider to exchange it for an Access Token
 
         # reset Client
         self.c = Client()
@@ -342,9 +338,9 @@ class ProtocolExample(BaseOAuthTestCase):
 
         response = self.c.get("/oauth/access_token/", parameters)
 
-        """The Service Provider checks the signature and replies with an
-        Access Token in the body of the HTTP response
-        """
+        # The Service Provider checks the signature and replies with an
+        # Access Token in the body of the HTTP response
+
         self.assertEqual(response.status_code, 200)
 
         response_params = cgi.parse_qs(response.content)
@@ -354,25 +350,25 @@ class ProtocolExample(BaseOAuthTestCase):
         self.assertEqual(response_params['oauth_token_secret'][0], access_token.secret)
         self.assertEqual(access_token.user.username, 'jane')
 
-        """
-            Accessing protected resources
-        """
+        ## Accessing protected resources
+        #
+        # The Consumer is now ready to request the private photo.
+        # Since the photo URL is not secure (HTTP), it must use HMAC-SHA1.
 
-        """The Consumer is now ready to request the private photo.
-        Since the photo URL is not secure (HTTP), it must use HMAC-SHA1.
-        """
 
-        """     Generating Signature Base String
-        To generate the signature, it first needs to generate the Signature Base String.
-        The request contains the following parameters (oauth_signature excluded)
-        which are ordered and concatenated into a normalized string
-        """
+        ## Generating Signature Base String
+        # To generate the signature, it first needs to generate the Signature
+        # Base String. The request contains the following parameters (oauth_
+        # signature excluded) which are ordered and concatenated into a
+        # normalized string
+
         parameters = self._make_protected_access_parameters(access_token)
 
-        """ Calculating Signature Value
-        HMAC-SHA1 produces the following digest value as a base64-encoded string
-        (using the Signature Base String as text and self.CONSUMER_SECRET as key)
-        """
+        ## Calculating Signature Value
+        # HMAC-SHA1 produces the following digest value as a base64-encoded
+        # string (using the Signature Base String as text and
+        # self.CONSUMER_SECRET as key)
+
         oauth_request = oauth.Request.from_token_and_callback(access_token,
             http_url='http://testserver/oauth/photo/',
             parameters=parameters)
@@ -380,18 +376,18 @@ class ProtocolExample(BaseOAuthTestCase):
         signature_method = oauth.SignatureMethod_HMAC_SHA1()
         signature = signature_method.sign(oauth_request, self.consumer, access_token)
 
-        """ Requesting Protected Resource
-        All together, the Consumer request for the photo is:
-        """
+        # Requesting Protected Resource
+        # All together, the Consumer request for the photo is:
+
         parameters['oauth_signature'] = signature
         response = self.c.get("/oauth/photo/", parameters)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.content, 'Protected Resource access!')
 
-        """ Revoking Access
-        If Jane deletes the Access Token of printer.example.com,
-        the Consumer will not be able to access the Protected Resource anymore
-        """
+        # Revoking Access
+        # If Jane deletes the Access Token of printer.example.com,
+        # the Consumer will not be able to access the Protected Resource anymore
+
         access_token.delete()
         # Note that an "Invalid signature" error will be raised here if the
         # token is not revoked by Jane because we reuse a previously used one.
