@@ -138,7 +138,7 @@ class BaseOAuthTestCase(TestCase):
         authorization_header += ", scope=%s" % self.scope.name
         return authorization_header
 
-    def __make_querystring_with_HMAC_SHA1(self, http_method, path, data, content_type):
+    def _make_querystring_with_HMAC_SHA1(self, http_method, path, data, content_type):
         """
         Utility method for creating a request which is signed using HMAC_SHA1 method
         """

@@ -86,7 +86,7 @@ class OauthTestIssue24(BaseOAuthTestCase):
 
         data = json.dumps({"data": {"foo": "bar"}})
         content_type = "application/json"
-        querystring = self.__make_querystring_with_HMAC_SHA1("POST", "/path/to/post", data, content_type)
+        querystring = self._make_querystring_with_HMAC_SHA1("POST", "/path/to/post", data, content_type)
 
         #we're just using the request, don't bother faking sending it
         rf = RequestFactory()
@@ -174,7 +174,7 @@ class OauthTestIssue24(BaseOAuthTestCase):
 
         data = {"foo": "bar"}
         content_type = "application/x-www-form-urlencoded"
-        querystring = self.__make_querystring_with_HMAC_SHA1("POST", "/path/to/post", data, content_type)
+        querystring = self._make_querystring_with_HMAC_SHA1("POST", "/path/to/post", data, content_type)
 
         #we're just using the request, don't bother faking sending it
         rf = RequestFactory()
