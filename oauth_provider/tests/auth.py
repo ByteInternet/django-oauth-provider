@@ -5,7 +5,7 @@ import re
 from urlparse import parse_qs, urlparse
 from django.test import TestCase, Client
 
-import oauth2
+import oauth2 as oauth
 
 from oauth_provider.models import Scope, Consumer, Token
 from oauth_provider.compat import get_user_model
@@ -132,14 +132,45 @@ class BaseOAuthTestCase(TestCase):
         self.ACCESS_TOKEN_SECRET = response_params['oauth_token_secret'][0]
 
     def _get_http_authorization_header(self, parameters):
-        HEADERS = oauth2.Request("GET", parameters=parameters).to_header()
+        HEADERS = oauth.Request("GET", parameters=parameters).to_header()
         authorization_header = HEADERS["Authorization"]
         # patch header with scope
         authorization_header += ", scope=%s" % self.scope.name
         return authorization_header
 
-class TestOAuthDifferentAuthorizationMethods(BaseOAuthTestCase):
+    def __make_querystring_with_HMAC_SHA1(self, http_method, path, data, content_type):
+        """
+        Utility method for creating a request which is signed using HMAC_SHA1 method
+        """
+        consumer = oauth.Consumer(key=self.CONSUMER_KEY, secret=self.CONSUMER_SECRET)
+        token = oauth.Token(key=self.access_token.key, secret=self.access_token.secret)
 
+        url = "http://testserver:80" + path
+
+        #if data is json, we want it in the body, else as parameters (i.e. queryparams on get)
+        parameters=None
+        body = ""
+        if content_type=="application/json":
+            body = data
+        else:
+            parameters = data
+
+        request = oauth.Request.from_consumer_and_token(
+            consumer=consumer,
+            token=token,
+            http_method=http_method,
+            http_url=url,
+            parameters=parameters,
+            body=body
+        )
+
+        # Sign the request.
+        signature_method = oauth.SignatureMethod_HMAC_SHA1()
+        request.sign_request(signature_method, consumer, token)
+        return request.to_url()
+
+
+class TestOAuthDifferentAuthorizationMethods(BaseOAuthTestCase):
     def test_request_token_with_authorization_header(self):
         self._request_token(METHOD_AUTHORIZATION_HEADER)
 
