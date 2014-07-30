@@ -8,6 +8,7 @@ import sys
 # fix sys path so we don't need to setup PYTHONPATH
 os.environ['DJANGO_SETTINGS_MODULE'] = 'oauth_provider.runtests.settings'
 
+import django
 from django.conf import settings
 from django.test.utils import get_runner
 from south.management.commands import patch_for_test_db_setup
@@ -36,7 +37,17 @@ def main():
         sys.exit(1)
 
     patch_for_test_db_setup()
-    failures = test_runner.run_tests(['oauth_provider.tests' + test_case])
+
+    if django.VERSION >= (1, 6):
+        # due to some changes in Django>=1.6 test runner
+        # if you not specify app then simply any `test` package
+        # could be run e.g. `tests` provided by broken oauth2 package (sic!)
+        test_prefix = 'oauth_provider.tests'
+    else:
+        # old test runner won't accept above prefix
+        test_prefix = 'tests'
+
+    failures = test_runner.run_tests([test_prefix + test_case])
 
     sys.exit(failures)
 
