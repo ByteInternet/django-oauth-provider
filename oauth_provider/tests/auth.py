@@ -66,9 +66,10 @@ class BaseOAuthTestCase(TestCase):
             print response
         self.assertEqual(response.status_code, 200)
 
-        self.assert_(
-            re.match(r'oauth_token_secret=[^&]+&oauth_token=[^&]+&oauth_callback_confirmed=true', response.content
-            ))
+        response_qs = parse_qs(response.content)
+        self.assert_(response_qs['oauth_token_secret'])
+        self.assert_(response_qs['oauth_token'])
+        self.assertEqual(response_qs['oauth_callback_confirmed'], ['true'])
 
         token = self.request_token = list(Token.objects.all())[-1]
         self.assert_(token.key in response.content)
