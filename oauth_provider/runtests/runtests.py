@@ -9,9 +9,14 @@ import sys
 os.environ['DJANGO_SETTINGS_MODULE'] = 'oauth_provider.runtests.settings'
 
 import django
+if django.VERSION >= (1, 7):
+    django.setup()
 from django.conf import settings
 from django.test.utils import get_runner
-from south.management.commands import patch_for_test_db_setup
+if django.VERSION >= (1, 7):
+    patch_for_test_db_setup = lambda: None
+else:
+    from south.management.commands import patch_for_test_db_setup
 
 
 def usage():
