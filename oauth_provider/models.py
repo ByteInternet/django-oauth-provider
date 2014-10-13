@@ -66,6 +66,10 @@ class Consumer(models.Model):
         self.save()
 
 
+def default_token_timestamp():
+    return long(time())
+
+
 class Token(models.Model):
     REQUEST = 1
     ACCESS = 2
@@ -74,7 +78,7 @@ class Token(models.Model):
     key = models.CharField(max_length=KEY_SIZE, null=True, blank=True)
     secret = models.CharField(max_length=SECRET_SIZE, null=True, blank=True)
     token_type = models.SmallIntegerField(choices=TOKEN_TYPES)
-    timestamp = models.IntegerField(default=long(time()))
+    timestamp = models.IntegerField(default=default_token_timestamp)
     is_approved = models.BooleanField(default=False)
     
     user = models.ForeignKey(AUTH_USER_MODEL, null=True, blank=True, related_name='tokens')

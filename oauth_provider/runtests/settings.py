@@ -47,7 +47,6 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.sites',
 
-    'south',
     'oauth_provider',
     'oauth_provider.tests'
 )
@@ -60,6 +59,9 @@ if django.VERSION >= (1, 5):
     # custom user model for tests issue #22
     INSTALLED_APPS += ('test_app',)
     AUTH_USER_MODEL = 'test_app.TestUser'
+
+if django.VERSION < (1, 7):
+    INSTALLED_APPS += ('south',)
 
 # try:
 #     import xmlrunner
