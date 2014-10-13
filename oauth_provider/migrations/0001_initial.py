@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 
 from django.db import models, migrations
 from django.conf import settings
+import oauth_provider.models
 
 
 class Migration(migrations.Migration):
@@ -60,7 +61,7 @@ class Migration(migrations.Migration):
                 ('key', models.CharField(max_length=32, null=True, blank=True)),
                 ('secret', models.CharField(max_length=16, null=True, blank=True)),
                 ('token_type', models.SmallIntegerField(choices=[(1, 'Request'), (2, 'Access')])),
-                ('timestamp', models.IntegerField(default=1408813049L)),
+                ('timestamp', models.IntegerField(default=oauth_provider.models.default_token_timestamp)),
                 ('is_approved', models.BooleanField(default=False)),
                 ('verifier', models.CharField(max_length=10)),
                 ('callback', models.CharField(max_length=2083, null=True, blank=True)),
