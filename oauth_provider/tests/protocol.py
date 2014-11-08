@@ -1,9 +1,14 @@
 import time
 import cgi
+try:
+    from unittest import skipIf
+except ImportError:
+    from django.utils.unittest import skipIf
 
 import oauth2 as oauth
 
 from django.test import Client
+from django.http import HttpResponse
 
 from oauth_provider.tests.auth import BaseOAuthTestCase
 from oauth_provider.models import Token, Consumer, Resource, Scope
@@ -69,6 +74,12 @@ class ProtocolExample(BaseOAuthTestCase):
         self.assertEqual(response.status_code, 401)
         self.assertEqual(response._headers['www-authenticate'], ('WWW-Authenticate', 'OAuth realm=""'))
         self.assertEqual(response.content, 'Invalid request parameters.')
+
+    @skipIf(not hasattr(HttpResponse, 'reason_phrase'), 'Can\'t easilty test in prev versions')
+    def test_returns_correct_reason_phrase(self):
+        """For Django 1.6+ status phrase used to be 401 OK"""
+        response = self.c.get("/oauth/request_token/")
+        self.assertEqual(response.reason_phrase, 'UNAUTHORIZED')
 
     def test_returns_401_wrong_callback(self):
         #If you try to put a wrong callback, it will return an error
