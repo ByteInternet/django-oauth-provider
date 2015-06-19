@@ -18,7 +18,7 @@ setup(
     description='Support of OAuth 1.0a in Django using python-oauth2.',
     author='David Larlet',
     author_email='david@larlet.fr',
-    url='http://code.welldev.org/django-oauth-plus/',
+    url='https://bitbucket.org/david/django-oauth-plus/',
     packages=find_packages(),
     classifiers=[
         'Development Status :: 4 - Beta',
