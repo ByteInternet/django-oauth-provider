@@ -42,6 +42,12 @@ except ImportError:
         now = datetime.datetime.now
 
 
+if django.VERSION >= (1, 7):
+    import importlib
+else:
+    from django.utils import importlib
+
+
 if django.VERSION >= (1, 4):
     from django.http import HttpResponse
 
