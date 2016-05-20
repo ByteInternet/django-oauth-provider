@@ -79,7 +79,7 @@ class ProtocolExample(BaseOAuthTestCase):
     def test_returns_correct_reason_phrase(self):
         """For Django 1.6+ status phrase used to be 401 OK"""
         response = self.c.get("/oauth/request_token/")
-        self.assertEqual(response.reason_phrase, 'UNAUTHORIZED')
+        self.assertEqual(response.reason_phrase.upper(), 'UNAUTHORIZED')
 
     def test_returns_401_wrong_callback(self):
         #If you try to put a wrong callback, it will return an error
@@ -310,8 +310,8 @@ class ProtocolExample(BaseOAuthTestCase):
         # The Service Provider asks Jane to sign-in using her username and password
 
         self.assertEqual(response.status_code, 302)
-        expected_redirect = 'http://testserver/accounts/login/?next=/oauth/authorize/%3Foauth_token%3D{0}'.format(token.key)
-        self.assertEqual(response['Location'], expected_redirect)
+        expected_redirect = '/accounts/login/?next=/oauth/authorize/%3Foauth_token%3D{0}'.format(token.key)
+        self.assertIn(expected_redirect, response['Location'])
 
         # Jane logins
         self.c.login(username='jane', password='toto')
