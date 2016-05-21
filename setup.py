@@ -37,6 +37,7 @@ setup(
         'Framework :: Django :: 1.6',
         'Framework :: Django :: 1.7',
         'Framework :: Django :: 1.8',
+        'Framework :: Django :: 1.9',
     ],
     # Make setuptools include all data files under version control,
     # svn and CVS by default
