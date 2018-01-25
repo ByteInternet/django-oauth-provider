@@ -57,7 +57,9 @@ def get_oauth_request(request):
     absolute_uri = request.build_absolute_uri(request.path)
 
     if "HTTP_X_FORWARDED_PROTO" in request.META:
-        scheme = request.META["HTTP_X_FORWARDED_PROTO"]
+        unparsed_schemes = request.META["HTTP_X_FORWARDED_PROTO"]
+        schemes = unparsed_schemes.split(',')
+        scheme = schemes[0]
         absolute_uri = urlunparse((scheme, ) + urlparse(absolute_uri)[1:])
 
     return oauth.Request.from_request(request.method,
@@ -93,7 +95,7 @@ def verify_oauth_request(request, oauth_request, consumer, token=None):
     return True
 
 def is_xauth_request(request):
-    return request.get('x_auth_password') and request.get('x_auth_username') 
+    return request.get('x_auth_password') and request.get('x_auth_username')
 
 def verify_xauth_request(request, oauth_request):
     """
